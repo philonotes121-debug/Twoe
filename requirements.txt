@@ -1,0 +1,16 @@
+aiogram==3.31.0
+pydantic==2.13.3
+aiohttp==3.14.0
+fastapi==0.115.5
+uvicorn==0.32.0
+SQLAlchemy==2.0.36
+asyncpg==0.30.0
+aiosqlite==0.20.0
+greenlet==3.1.1
+python-dotenv==1.0.1
+google-genai==2.23.0
+Pillow==11.0.0
+APScheduler==3.10.4
+matplotlib==3.9.2
+aiohttp-socks==0.10.1
+cryptography>=43,<46

@@ -1,0 +1,195 @@
+# Feature Selection Applied
+
+Checklist YES applied: 152
+Checklist MAYBE: 8 — resolved/absorbed into the latest integrated flow where applicable
+Checklist NO: 10 — kept outside the public User command surface unless required internally
+
+## Latest requirement overrides
+- Mobile number verification is mandatory before the LMS user menu is exposed.
+- Phone numbers are accepted only from an explicit self-contact share and are encrypted for Admin-only retrieval.
+- Course catalogue and course cards are Mini App only; Trending remains private-chat only.
+- Public User command menu is capped at 10 commands.
+- Target is replaced by Join Our Community — ₹800/month: all courses, personal AI tracking, answer evaluation.
+- CA TRACKER PRO by Professor 🥼 — ₹200/month: subscription-gated Mini App + Notion sync + source/topic/date/search filters + zoom/reading controls.
+- Promo creation supports a 12-hour automatic group broadcast and persistent deletion scheduling.
+- UPSC countdown is 07:30 IST daily; the default exam date is the official UPSC calendar date 23 May 2027, with explicit env override available.
+- AI is portal-specific, concise, injection-resistant, and prevented from exposing Admin/host/user-secret data.
+- Admin presence is activity-heartbeat based; Telegram does not provide a bot-readable live presence signal for an arbitrary user.
+- Vercel mode uses a protected cron route instead of persistent background workers.
+- Optional outbound proxy is supported for controlled egress routing; it does not guarantee anonymity or make the system unhackable.
+
+## Checklist selections marked YES
+- U01: Welcome/menu open
+- U02: Referral/deep-link tracking
+- U03: Backup-channel / join verification gate
+- U04: Access request submission
+- U07: UPSC section
+- U08: State PSC section
+- U14: Trending courses
+- U15: Course detail view
+- U16: Course purchase flow
+- U17: Payment method selection
+- U18: UPI payment flow
+- U19: Gift-card payment flow
+- U20: Payment proof upload
+- U21: Payment/order status
+- U22: Promo-code apply
+- U23: Purchased courses
+- U24: Course access after approval
+- U25: Purchased course group/link access
+- U26: Help
+- U28: Professor/support contact
+- U29: Contact message with text
+- U30: Contact message with photo/document
+- U33: User message routed to Admin inbox
+- U34: Admin reply routed back to same user
+- U36: Professor/portal AI chat
+- U37: AI conversation memory
+- U38: Recent conversation context
+- U39: Student profile memory
+- U40: Portal course-catalog grounded AI
+- U41: User language/style matching
+- U42: Concise answer behavior
+- U43: No unnecessary questions/info
+- U44: Prompt-injection protection
+- U45: Hidden prompt/secret protection
+- U46: Other-user data protection
+- U47: Admin identity/data protection
+- U48: Hosting/device detail protection
+- U49: AI daily usage limit
+- U50: AI short-term rate limit
+- U51: AI abuse/freeze protection
+- U52: Referral wallet
+- U53: Referral-link generation
+- U54: Referral tracking
+- U55: Verified referral counting
+- U56: Pending referral status
+- U57: Coins earning
+- U58: Coin ledger/history
+- U59: Course redemption through coins
+- U60: Daily target
+- U61: Target management
+- U62: Streak tracking
+- U63: Streak completion action
+- U64: Doubt submission
+- U65: Doubt history
+- U66: Doubt escalation to Admin
+- U67: Doubt answered state
+- U68: Personal reminder create
+- U69: Reminder list
+- U71: Automated reminder delivery
+- U72: New-course alerts ON
+- U74: New-course alert delivery
+- U76: Resources access
+- U77: Leaderboard
+- U79: Temporary-message auto-delete
+- U80: Payment-proof auto-delete
+- U81: Broadcast reply handling
+- U82: Private-message fallback
+- U83: Admin offline detection
+- U84: Custom offline message
+- U85: Safe generic user error responses
+- U87: Erase AI memory/profile
+- U88: No Admin command access
+- U89: No Admin dashboard access
+- U90: No backend secret exposure
+- A01: Admin-only command menu
+- A02: Backend Admin allow-list
+- A03: Pending LMS requests
+- A04: Approve user
+- A05: Deny user
+- A06: Revoke LMS access
+- A07: Grandfather existing customers
+- A08: LMS gate ON/OFF
+- A09: Global kill switch
+- A11: Pending payment orders
+- A13: Approve payment
+- A14: Reject payment
+- A15: AI ON/OFF
+- A16: Offline AI mode
+- A17: Offline mode setting
+- A18: Promo-code creation
+- A19: Guided course creation
+- A20: Quick course creation
+- A21: Group broadcast
+- A22: Manual course grant
+- A23: Change course price
+- A24: Hide/remove course
+- A26: Course/group link setup
+- A27: Add trending course
+- A28: Remove trending course
+- A29: List all courses
+- A30: Search course
+- A31: Detailed course info
+- A32: List sections
+- A33: List section keys
+- A35: User lookup
+- A36: Copy-ready user profile
+- A37: User activity trail
+- A38: Support/contact history
+- A39: Recent users
+- A41: General export
+- A45: Bot statistics
+- A46: Live Admin dashboard
+- A47: Analytics
+- A48: 3D analytics
+- A50: Broadcast all
+- A51: Broadcast all connected chats
+- A52: Broadcast selected chats
+- A53: Delete broadcast
+- A54: Broadcast history
+- A55: Schedule broadcast
+- A56: Scheduled list
+- A58: AI business report
+- A59: System/event logs
+- A60: System health
+- A61: Privacy/security audit
+- A62: Clear temp cache/state safely
+- A63: Ban user
+- A64: Block user
+- A65: Unban user
+- A66: Unblock user
+- A67: Group anti-spam ON/OFF
+- A68: COTD ON
+- A69: COTD OFF
+- A70: Group join monitoring
+- A71: Group leave monitoring
+- A72: Connected-chat registry
+- A73: Group activity watch
+- A74: Admin reply from inbox
+- A75: Reply mapped to exact user
+- A76: Mark inbox conversation done
+- A77: Block from inbox
+- A78: Media/document forwarding
+- A79: Retrieve explicitly shared phone
+- A80: Copy-ready user information bundle
+- A81: Admin activity heartbeat
+- A82: Automatic online/offline status
+- A83: Admin-only security alerts
+- A84: Command authorization independent of menu
+- A85: User context visible to Admin, not AI
+- A86: Payment evidence/audit details
+- A87: Referral/audit details
+- A88: Controlled export/retention management
+
+## Checklist selections marked MAYBE
+- U06: Main LMS navigation
+- U09: Prelims/Mains section
+- U10: Subject-specific section
+- U11: Optional-subject section
+- U12: Section-wise course count
+- U13: All courses view
+- U32: Encrypted contact storage
+- A40: Recent leads
+
+## Checklist selections marked NO
+- U05: Access status: pending/approved/denied/revoked
+- U27: FAQ
+- U31: User contact-number share
+- U35: Show own Telegram ID
+- U70: Reminder removal
+- U73: New-course alerts OFF
+- U75: Feedback submission
+- U78: Certificate flow
+- U86: Privacy page
+- A34: Top/best-selling courses

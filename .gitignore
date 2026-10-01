@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.vercel/
+data/
+.env
+app.env
+*.db
+bot_state_backup.json

@@ -1,0 +1,2595 @@
+{
+  "source_file": "LMS_AZ_Feature_Checklist_TABLET_WORKING (1).xlsx",
+  "total": 287,
+  "counts": {
+    "USER": 90,
+    "ADMIN": 88,
+    "SECURITY": 88,
+    "AI": 21
+  },
+  "features": [
+    {
+      "category": "USER",
+      "id": "U01",
+      "role": "USER",
+      "command_or_code": "/start",
+      "feature": "Welcome/menu open",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U02",
+      "role": "USER",
+      "command_or_code": "/start ref_ID",
+      "feature": "Referral/deep-link tracking",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U03",
+      "role": "USER",
+      "command_or_code": "BACKUP_CHANNEL_CHECK",
+      "feature": "Backup-channel / join verification gate",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U04",
+      "role": "USER",
+      "command_or_code": "LMS_ACCESS_REQUEST",
+      "feature": "Access request submission",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U05",
+      "role": "USER",
+      "command_or_code": "/status",
+      "feature": "Access status: pending/approved/denied/revoked",
+      "uploaded_decision": "NO",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U06",
+      "role": "USER",
+      "command_or_code": "MAIN_MENU",
+      "feature": "Main LMS navigation",
+      "uploaded_decision": "MAYBE",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U07",
+      "role": "USER",
+      "command_or_code": "UPSC_MENU",
+      "feature": "UPSC section",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U08",
+      "role": "USER",
+      "command_or_code": "PSC_MENU",
+      "feature": "State PSC section",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U09",
+      "role": "USER",
+      "command_or_code": "PRELIMS_MAINS",
+      "feature": "Prelims/Mains section",
+      "uploaded_decision": "MAYBE",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U10",
+      "role": "USER",
+      "command_or_code": "SUBJECT_MENU",
+      "feature": "Subject-specific section",
+      "uploaded_decision": "MAYBE",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U11",
+      "role": "USER",
+      "command_or_code": "OPTIONAL_MENU",
+      "feature": "Optional-subject section",
+      "uploaded_decision": "MAYBE",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U12",
+      "role": "USER",
+      "command_or_code": "COURSE_COUNT",
+      "feature": "Section-wise course count",
+      "uploaded_decision": "MAYBE",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U13",
+      "role": "USER",
+      "command_or_code": "/courses",
+      "feature": "All courses view",
+      "uploaded_decision": "MAYBE",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U14",
+      "role": "USER",
+      "command_or_code": "/trending",
+      "feature": "Trending courses",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U15",
+      "role": "USER",
+      "command_or_code": "COURSE_DETAIL",
+      "feature": "Course detail view",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U16",
+      "role": "USER",
+      "command_or_code": "BUY_FLOW",
+      "feature": "Course purchase flow",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U17",
+      "role": "USER",
+      "command_or_code": "PAYMENT_METHOD",
+      "feature": "Payment method selection",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U18",
+      "role": "USER",
+      "command_or_code": "UPI_PAYMENT",
+      "feature": "UPI payment flow",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U19",
+      "role": "USER",
+      "command_or_code": "GIFT_CARD_PAYMENT",
+      "feature": "Gift-card payment flow",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U20",
+      "role": "USER",
+      "command_or_code": "PROOF_UPLOAD",
+      "feature": "Payment proof upload",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U21",
+      "role": "USER",
+      "command_or_code": "/myorders",
+      "feature": "Payment/order status",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U22",
+      "role": "USER",
+      "command_or_code": "/promo CODE",
+      "feature": "Promo-code apply",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U23",
+      "role": "USER",
+      "command_or_code": "/my_courses",
+      "feature": "Purchased courses",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U24",
+      "role": "USER",
+      "command_or_code": "COURSE_UNLOCK",
+      "feature": "Course access after approval",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U25",
+      "role": "USER",
+      "command_or_code": "COURSE_GROUP_LINK",
+      "feature": "Purchased course group/link access",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U26",
+      "role": "USER",
+      "command_or_code": "/help",
+      "feature": "Help",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U27",
+      "role": "USER",
+      "command_or_code": "/faq",
+      "feature": "FAQ",
+      "uploaded_decision": "NO",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U28",
+      "role": "USER",
+      "command_or_code": "/contact",
+      "feature": "Professor/support contact",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U29",
+      "role": "USER",
+      "command_or_code": "CONTACT_TEXT",
+      "feature": "Contact message with text",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U30",
+      "role": "USER",
+      "command_or_code": "CONTACT_MEDIA",
+      "feature": "Contact message with photo/document",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U31",
+      "role": "USER",
+      "command_or_code": "CONTACT_PHONE",
+      "feature": "User contact-number share",
+      "uploaded_decision": "NO",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U32",
+      "role": "USER",
+      "command_or_code": "CONTACT_ENCRYPT",
+      "feature": "Encrypted contact storage",
+      "uploaded_decision": "MAYBE",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U33",
+      "role": "USER",
+      "command_or_code": "USER_TO_ADMIN",
+      "feature": "User message routed to Admin inbox",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U34",
+      "role": "USER",
+      "command_or_code": "ADMIN_TO_USER",
+      "feature": "Admin reply routed back to same user",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U35",
+      "role": "USER",
+      "command_or_code": "/myid",
+      "feature": "Show own Telegram ID",
+      "uploaded_decision": "NO",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U36",
+      "role": "USER",
+      "command_or_code": "/ask_ai",
+      "feature": "Professor/portal AI chat",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U37",
+      "role": "USER",
+      "command_or_code": "AI_MEMORY",
+      "feature": "AI conversation memory",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U38",
+      "role": "USER",
+      "command_or_code": "AI_CONTEXT",
+      "feature": "Recent conversation context",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U39",
+      "role": "USER",
+      "command_or_code": "AI_PROFILE",
+      "feature": "Student profile memory",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U40",
+      "role": "USER",
+      "command_or_code": "AI_CATALOG_GROUNDING",
+      "feature": "Portal course-catalog grounded AI",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U41",
+      "role": "USER",
+      "command_or_code": "AI_LANGUAGE_MATCH",
+      "feature": "User language/style matching",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U42",
+      "role": "USER",
+      "command_or_code": "AI_CONCISE",
+      "feature": "Concise answer behavior",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U43",
+      "role": "USER",
+      "command_or_code": "AI_NO_EXTRA",
+      "feature": "No unnecessary questions/info",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U44",
+      "role": "USER",
+      "command_or_code": "AI_INJECTION_GUARD",
+      "feature": "Prompt-injection protection",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U45",
+      "role": "USER",
+      "command_or_code": "AI_SECRET_GUARD",
+      "feature": "Hidden prompt/secret protection",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U46",
+      "role": "USER",
+      "command_or_code": "AI_OTHER_USER_GUARD",
+      "feature": "Other-user data protection",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U47",
+      "role": "USER",
+      "command_or_code": "AI_ADMIN_GUARD",
+      "feature": "Admin identity/data protection",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U48",
+      "role": "USER",
+      "command_or_code": "AI_HOST_GUARD",
+      "feature": "Hosting/device detail protection",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U49",
+      "role": "USER",
+      "command_or_code": "AI_RATE_LIMIT",
+      "feature": "AI daily usage limit",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U50",
+      "role": "USER",
+      "command_or_code": "AI_SHORT_RATE",
+      "feature": "AI short-term rate limit",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U51",
+      "role": "USER",
+      "command_or_code": "AI_ABUSE_FREEZE",
+      "feature": "AI abuse/freeze protection",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U52",
+      "role": "USER",
+      "command_or_code": "/wallet",
+      "feature": "Referral wallet",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U53",
+      "role": "USER",
+      "command_or_code": "/referral",
+      "feature": "Referral-link generation",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U54",
+      "role": "USER",
+      "command_or_code": "REFERRAL_TRACKING",
+      "feature": "Referral tracking",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U55",
+      "role": "USER",
+      "command_or_code": "REFERRAL_VERIFY",
+      "feature": "Verified referral counting",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U56",
+      "role": "USER",
+      "command_or_code": "REFERRAL_PENDING",
+      "feature": "Pending referral status",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U57",
+      "role": "USER",
+      "command_or_code": "COINS_EARN",
+      "feature": "Coins earning",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U58",
+      "role": "USER",
+      "command_or_code": "COIN_LEDGER",
+      "feature": "Coin ledger/history",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U59",
+      "role": "USER",
+      "command_or_code": "COIN_REDEEM",
+      "feature": "Course redemption through coins",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U60",
+      "role": "USER",
+      "command_or_code": "/today",
+      "feature": "Daily target",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U61",
+      "role": "USER",
+      "command_or_code": "/target",
+      "feature": "Target management",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U62",
+      "role": "USER",
+      "command_or_code": "STREAK",
+      "feature": "Streak tracking",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U63",
+      "role": "USER",
+      "command_or_code": "STREAK_DONE",
+      "feature": "Streak completion action",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U64",
+      "role": "USER",
+      "command_or_code": "/doubt",
+      "feature": "Doubt submission",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U65",
+      "role": "USER",
+      "command_or_code": "DOUBT_HISTORY",
+      "feature": "Doubt history",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U66",
+      "role": "USER",
+      "command_or_code": "DOUBT_ESCALATE",
+      "feature": "Doubt escalation to Admin",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U67",
+      "role": "USER",
+      "command_or_code": "DOUBT_ANSWERED",
+      "feature": "Doubt answered state",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U68",
+      "role": "USER",
+      "command_or_code": "/remind",
+      "feature": "Personal reminder create",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U69",
+      "role": "USER",
+      "command_or_code": "/reminders",
+      "feature": "Reminder list",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U70",
+      "role": "USER",
+      "command_or_code": "/unremind",
+      "feature": "Reminder removal",
+      "uploaded_decision": "NO",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U71",
+      "role": "USER",
+      "command_or_code": "REMINDER_DELIVERY",
+      "feature": "Automated reminder delivery",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U72",
+      "role": "USER",
+      "command_or_code": "/notify_me",
+      "feature": "New-course alerts ON",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U73",
+      "role": "USER",
+      "command_or_code": "/notify_off",
+      "feature": "New-course alerts OFF",
+      "uploaded_decision": "NO",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U74",
+      "role": "USER",
+      "command_or_code": "COURSE_ALERT",
+      "feature": "New-course alert delivery",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U75",
+      "role": "USER",
+      "command_or_code": "/feedback",
+      "feature": "Feedback submission",
+      "uploaded_decision": "NO",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U76",
+      "role": "USER",
+      "command_or_code": "/resources",
+      "feature": "Resources access",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U77",
+      "role": "USER",
+      "command_or_code": "/leaderboard",
+      "feature": "Leaderboard",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U78",
+      "role": "USER",
+      "command_or_code": "/certificate",
+      "feature": "Certificate flow",
+      "uploaded_decision": "NO",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U79",
+      "role": "USER",
+      "command_or_code": "TEMP_DELETE",
+      "feature": "Temporary-message auto-delete",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U80",
+      "role": "USER",
+      "command_or_code": "PROOF_DELETE",
+      "feature": "Payment-proof auto-delete",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U81",
+      "role": "USER",
+      "command_or_code": "BROADCAST_REPLY",
+      "feature": "Broadcast reply handling",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U82",
+      "role": "USER",
+      "command_or_code": "PRIVATE_FALLBACK",
+      "feature": "Private-message fallback",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U83",
+      "role": "USER",
+      "command_or_code": "ADMIN_OFFLINE",
+      "feature": "Admin offline detection",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U84",
+      "role": "USER",
+      "command_or_code": "OFFLINE_MSG",
+      "feature": "Custom offline message",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U85",
+      "role": "USER",
+      "command_or_code": "GENERIC_ERROR",
+      "feature": "Safe generic user error responses",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U86",
+      "role": "USER",
+      "command_or_code": "/privacy",
+      "feature": "Privacy page",
+      "uploaded_decision": "NO",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U87",
+      "role": "USER",
+      "command_or_code": "/forget_me",
+      "feature": "Erase AI memory/profile",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U88",
+      "role": "USER",
+      "command_or_code": "USER_ROLE_SCOPE",
+      "feature": "No Admin command access",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U89",
+      "role": "USER",
+      "command_or_code": "USER_DASH_SCOPE",
+      "feature": "No Admin dashboard access",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "USER",
+      "id": "U90",
+      "role": "USER",
+      "command_or_code": "USER_SECRET_SCOPE",
+      "feature": "No backend secret exposure",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A01",
+      "role": "ADMIN",
+      "command_or_code": "/adminhelp",
+      "feature": "Admin-only command menu",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A02",
+      "role": "ADMIN",
+      "command_or_code": "ADMIN_ALLOWLIST",
+      "feature": "Backend Admin allow-list",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A03",
+      "role": "ADMIN",
+      "command_or_code": "/lms_requests",
+      "feature": "Pending LMS requests",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A04",
+      "role": "ADMIN",
+      "command_or_code": "/lms_approve USER_ID",
+      "feature": "Approve user",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A05",
+      "role": "ADMIN",
+      "command_or_code": "/lms_deny USER_ID",
+      "feature": "Deny user",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A06",
+      "role": "ADMIN",
+      "command_or_code": "/lms_revoke USER_ID",
+      "feature": "Revoke LMS access",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A07",
+      "role": "ADMIN",
+      "command_or_code": "/lms_grandfather",
+      "feature": "Grandfather existing customers",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A08",
+      "role": "ADMIN",
+      "command_or_code": "/lms_gate",
+      "feature": "LMS gate ON/OFF",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A09",
+      "role": "ADMIN",
+      "command_or_code": "/lockdown",
+      "feature": "Global kill switch",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A10",
+      "role": "ADMIN",
+      "command_or_code": "/doubts",
+      "feature": "Open doubts",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A11",
+      "role": "ADMIN",
+      "command_or_code": "/pending_payments",
+      "feature": "Pending payment orders",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A12",
+      "role": "ADMIN",
+      "command_or_code": "/pending",
+      "feature": "Pending orders",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A13",
+      "role": "ADMIN",
+      "command_or_code": "/approve ORDER_ID",
+      "feature": "Approve payment",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A14",
+      "role": "ADMIN",
+      "command_or_code": "/reject ORDER_ID",
+      "feature": "Reject payment",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A15",
+      "role": "ADMIN",
+      "command_or_code": "/toggle_ai",
+      "feature": "AI ON/OFF",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A16",
+      "role": "ADMIN",
+      "command_or_code": "/offline",
+      "feature": "Offline AI mode",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A17",
+      "role": "ADMIN",
+      "command_or_code": "/offline auto|on|off",
+      "feature": "Offline mode setting",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A18",
+      "role": "ADMIN",
+      "command_or_code": "/createpromo",
+      "feature": "Promo-code creation",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A19",
+      "role": "ADMIN",
+      "command_or_code": "/addcourse",
+      "feature": "Guided course creation",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A20",
+      "role": "ADMIN",
+      "command_or_code": "/quickadd",
+      "feature": "Quick course creation",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A21",
+      "role": "ADMIN",
+      "command_or_code": "/addforall",
+      "feature": "Group broadcast",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A22",
+      "role": "ADMIN",
+      "command_or_code": "/grant USER_ID COURSE",
+      "feature": "Manual course grant",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A23",
+      "role": "ADMIN",
+      "command_or_code": "/price COURSE PRICE",
+      "feature": "Change course price",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A24",
+      "role": "ADMIN",
+      "command_or_code": "/removecourse COURSE",
+      "feature": "Hide/remove course",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A25",
+      "role": "ADMIN",
+      "command_or_code": "/movecourse COURSE SECTION",
+      "feature": "Move course",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A26",
+      "role": "ADMIN",
+      "command_or_code": "/setlink COURSE URL",
+      "feature": "Course/group link setup",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A27",
+      "role": "ADMIN",
+      "command_or_code": "/trending_add COURSE",
+      "feature": "Add trending course",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A28",
+      "role": "ADMIN",
+      "command_or_code": "/trending_remove COURSE",
+      "feature": "Remove trending course",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A29",
+      "role": "ADMIN",
+      "command_or_code": "/listcourses",
+      "feature": "List all courses",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A30",
+      "role": "ADMIN",
+      "command_or_code": "/findcourse TEXT",
+      "feature": "Search course",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A31",
+      "role": "ADMIN",
+      "command_or_code": "/courseinfo COURSE",
+      "feature": "Detailed course info",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A32",
+      "role": "ADMIN",
+      "command_or_code": "/listsections",
+      "feature": "List sections",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A33",
+      "role": "ADMIN",
+      "command_or_code": "/listsectionkeys",
+      "feature": "List section keys",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A34",
+      "role": "ADMIN",
+      "command_or_code": "/topcourses",
+      "feature": "Top/best-selling courses",
+      "uploaded_decision": "NO",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A35",
+      "role": "ADMIN",
+      "command_or_code": "/userinfo USER_ID",
+      "feature": "User lookup",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A36",
+      "role": "ADMIN",
+      "command_or_code": "/userpack USER_ID",
+      "feature": "Copy-ready user profile",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A37",
+      "role": "ADMIN",
+      "command_or_code": "/activity USER_ID",
+      "feature": "User activity trail",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A38",
+      "role": "ADMIN",
+      "command_or_code": "/contacthistory USER_ID",
+      "feature": "Support/contact history",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A39",
+      "role": "ADMIN",
+      "command_or_code": "/recentusers",
+      "feature": "Recent users",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A40",
+      "role": "ADMIN",
+      "command_or_code": "/leads",
+      "feature": "Recent leads",
+      "uploaded_decision": "MAYBE",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A41",
+      "role": "ADMIN",
+      "command_or_code": "/export",
+      "feature": "General export",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A42",
+      "role": "ADMIN",
+      "command_or_code": "/export_users",
+      "feature": "Users CSV",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A43",
+      "role": "ADMIN",
+      "command_or_code": "/export_messages",
+      "feature": "Messages CSV",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A44",
+      "role": "ADMIN",
+      "command_or_code": "/revenue",
+      "feature": "Revenue estimate",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A45",
+      "role": "ADMIN",
+      "command_or_code": "/stats",
+      "feature": "Bot statistics",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A46",
+      "role": "ADMIN",
+      "command_or_code": "/dashboard",
+      "feature": "Live Admin dashboard",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A47",
+      "role": "ADMIN",
+      "command_or_code": "/analytics",
+      "feature": "Analytics",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A48",
+      "role": "ADMIN",
+      "command_or_code": "/analytics3d",
+      "feature": "3D analytics",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A49",
+      "role": "ADMIN",
+      "command_or_code": "/chats",
+      "feature": "Connected groups/channels",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A50",
+      "role": "ADMIN",
+      "command_or_code": "/broadcast",
+      "feature": "Broadcast all",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A51",
+      "role": "ADMIN",
+      "command_or_code": "/broadcast_all",
+      "feature": "Broadcast all connected chats",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A52",
+      "role": "ADMIN",
+      "command_or_code": "/broadcast_selected",
+      "feature": "Broadcast selected chats",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A53",
+      "role": "ADMIN",
+      "command_or_code": "/delete_broadcast CAMPAIGN",
+      "feature": "Delete broadcast",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A54",
+      "role": "ADMIN",
+      "command_or_code": "/broadcast_history",
+      "feature": "Broadcast history",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A55",
+      "role": "ADMIN",
+      "command_or_code": "/schedule",
+      "feature": "Schedule broadcast",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A56",
+      "role": "ADMIN",
+      "command_or_code": "/scheduled",
+      "feature": "Scheduled list",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A57",
+      "role": "ADMIN",
+      "command_or_code": "/unschedule ID",
+      "feature": "Remove scheduled broadcast",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A58",
+      "role": "ADMIN",
+      "command_or_code": "/weekly_report",
+      "feature": "AI business report",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A59",
+      "role": "ADMIN",
+      "command_or_code": "/logs",
+      "feature": "System/event logs",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A60",
+      "role": "ADMIN",
+      "command_or_code": "/health",
+      "feature": "System health",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A61",
+      "role": "ADMIN",
+      "command_or_code": "/privacy_audit",
+      "feature": "Privacy/security audit",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A62",
+      "role": "ADMIN",
+      "command_or_code": "/restart",
+      "feature": "Clear temp cache/state safely",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A63",
+      "role": "ADMIN",
+      "command_or_code": "/ban USER_ID",
+      "feature": "Ban user",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A64",
+      "role": "ADMIN",
+      "command_or_code": "/block USER_ID",
+      "feature": "Block user",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A65",
+      "role": "ADMIN",
+      "command_or_code": "/unban USER_ID",
+      "feature": "Unban user",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A66",
+      "role": "ADMIN",
+      "command_or_code": "/unblock USER_ID",
+      "feature": "Unblock user",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A67",
+      "role": "ADMIN",
+      "command_or_code": "/antispam",
+      "feature": "Group anti-spam ON/OFF",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A68",
+      "role": "ADMIN",
+      "command_or_code": "/cotd_on",
+      "feature": "COTD ON",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A69",
+      "role": "ADMIN",
+      "command_or_code": "/cotd_off",
+      "feature": "COTD OFF",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A70",
+      "role": "ADMIN",
+      "command_or_code": "GROUP_JOIN_MONITOR",
+      "feature": "Group join monitoring",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A71",
+      "role": "ADMIN",
+      "command_or_code": "GROUP_LEAVE_MONITOR",
+      "feature": "Group leave monitoring",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A72",
+      "role": "ADMIN",
+      "command_or_code": "CHAT_REGISTRY",
+      "feature": "Connected-chat registry",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A73",
+      "role": "ADMIN",
+      "command_or_code": "GROUP_ACTIVITY",
+      "feature": "Group activity watch",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A74",
+      "role": "ADMIN",
+      "command_or_code": "INBOX_REPLY",
+      "feature": "Admin reply from inbox",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A75",
+      "role": "ADMIN",
+      "command_or_code": "INBOX_REPLY_MAP",
+      "feature": "Reply mapped to exact user",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A76",
+      "role": "ADMIN",
+      "command_or_code": "INBOX_DONE",
+      "feature": "Mark inbox conversation done",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A77",
+      "role": "ADMIN",
+      "command_or_code": "INBOX_BLOCK",
+      "feature": "Block from inbox",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A78",
+      "role": "ADMIN",
+      "command_or_code": "INBOX_FORWARD_MEDIA",
+      "feature": "Media/document forwarding",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A79",
+      "role": "ADMIN",
+      "command_or_code": "USER_PHONE_VIEW",
+      "feature": "Retrieve explicitly shared phone",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A80",
+      "role": "ADMIN",
+      "command_or_code": "USER_PACK_EXPORT",
+      "feature": "Copy-ready user information bundle",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A81",
+      "role": "ADMIN",
+      "command_or_code": "ADMIN_HEARTBEAT",
+      "feature": "Admin activity heartbeat",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A82",
+      "role": "ADMIN",
+      "command_or_code": "ADMIN_AUTO_STATUS",
+      "feature": "Automatic online/offline status",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A83",
+      "role": "ADMIN",
+      "command_or_code": "ADMIN_SECURITY_ALERTS",
+      "feature": "Admin-only security alerts",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A84",
+      "role": "ADMIN",
+      "command_or_code": "ADMIN_AUTH_SECONDARY",
+      "feature": "Command authorization independent of menu",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A85",
+      "role": "ADMIN",
+      "command_or_code": "ADMIN_USER_CONTEXT",
+      "feature": "User context visible to Admin, not AI",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A86",
+      "role": "ADMIN",
+      "command_or_code": "ADMIN_PAYMENT_AUDIT",
+      "feature": "Payment evidence/audit details",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A87",
+      "role": "ADMIN",
+      "command_or_code": "ADMIN_REFERRAL_AUDIT",
+      "feature": "Referral/audit details",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "ADMIN",
+      "id": "A88",
+      "role": "ADMIN",
+      "command_or_code": "ADMIN_DATA_RETENTION",
+      "feature": "Controlled export/retention management",
+      "uploaded_decision": "YES",
+      "final_policy": "INCLUDE_AND_CONSOLIDATE"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S01",
+      "role": "SHARED",
+      "command_or_code": "FASTAPI",
+      "feature": "FastAPI backend",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S02",
+      "role": "SHARED",
+      "command_or_code": "SAME_LMS_APP",
+      "feature": "All features in same LMS app",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S03",
+      "role": "SHARED",
+      "command_or_code": "TELEGRAM_WEBHOOK",
+      "feature": "Telegram webhook mode",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S04",
+      "role": "SHARED",
+      "command_or_code": "api/index.py",
+      "feature": "Vercel Python entrypoint",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S05",
+      "role": "SHARED",
+      "command_or_code": "vercel.json",
+      "feature": "Vercel routing/config",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S06",
+      "role": "SHARED",
+      "command_or_code": "/api/cron",
+      "feature": "Protected scheduler endpoint",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S07",
+      "role": "SHARED",
+      "command_or_code": "SERVERLESS_SAFE",
+      "feature": "Serverless-safe scheduling",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S08",
+      "role": "SHARED",
+      "command_or_code": "DB_PERSISTENCE",
+      "feature": "Persistent database state",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S09",
+      "role": "SHARED",
+      "command_or_code": "SQLALCHEMY",
+      "feature": "SQLAlchemy data layer",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S10",
+      "role": "SHARED",
+      "command_or_code": "USERS_TABLE",
+      "feature": "User records",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S11",
+      "role": "SHARED",
+      "command_or_code": "ORDERS_TABLE",
+      "feature": "Orders",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S12",
+      "role": "SHARED",
+      "command_or_code": "COURSES_TABLE",
+      "feature": "Courses",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S13",
+      "role": "SHARED",
+      "command_or_code": "ACCESS_TABLE",
+      "feature": "User-course access",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S14",
+      "role": "SHARED",
+      "command_or_code": "ACTIVITY_TABLE",
+      "feature": "User activity",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S15",
+      "role": "SHARED",
+      "command_or_code": "CONTACT_TABLE",
+      "feature": "Contact history",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S16",
+      "role": "SHARED",
+      "command_or_code": "INBOX_TABLE",
+      "feature": "Inbox records",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S17",
+      "role": "SHARED",
+      "command_or_code": "BROADCAST_TABLE",
+      "feature": "Broadcast campaigns",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S18",
+      "role": "SHARED",
+      "command_or_code": "SCHEDULED_DELETE",
+      "feature": "Scheduled deletion records",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S19",
+      "role": "SHARED",
+      "command_or_code": "REFERRAL_TABLE",
+      "feature": "Referral records",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S20",
+      "role": "SHARED",
+      "command_or_code": "EVENT_LOG",
+      "feature": "Event logs",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S21",
+      "role": "SHARED",
+      "command_or_code": "AI_MEMORY_DB",
+      "feature": "AI memory",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S22",
+      "role": "SHARED",
+      "command_or_code": "AI_PROFILE_DB",
+      "feature": "AI profile",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S23",
+      "role": "SHARED",
+      "command_or_code": "STREAK_DB",
+      "feature": "Streak/reminder/ticket state",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S24",
+      "role": "SHARED",
+      "command_or_code": "ADMIN_ALLOWLIST",
+      "feature": "Admin allow-list",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S25",
+      "role": "SHARED",
+      "command_or_code": "ROLE_AUTH",
+      "feature": "Backend authorization",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S26",
+      "role": "SHARED",
+      "command_or_code": "CMD_SCOPE",
+      "feature": "Separate User/Admin Telegram command scopes",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S27",
+      "role": "SHARED",
+      "command_or_code": "WEBHOOK_SECRET",
+      "feature": "Telegram webhook secret validation",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S28",
+      "role": "SHARED",
+      "command_or_code": "INITDATA_HMAC",
+      "feature": "Mini-App initData HMAC verification",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S29",
+      "role": "SHARED",
+      "command_or_code": "INITDATA_EXPIRY",
+      "feature": "Expired Mini-App auth rejection",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S30",
+      "role": "SHARED",
+      "command_or_code": "LOG_SCRUB",
+      "feature": "Sensitive log scrubbing",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S31",
+      "role": "SHARED",
+      "command_or_code": "SECRET_REDACTION",
+      "feature": "Bot/API/Admin secret redaction",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S32",
+      "role": "SHARED",
+      "command_or_code": "IP_REDACTION",
+      "feature": "IP/log privacy handling",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S33",
+      "role": "SHARED",
+      "command_or_code": "SECRET_SCAN",
+      "feature": "Secret-pattern detection",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S34",
+      "role": "SHARED",
+      "command_or_code": "CALLBACK_VALIDATE",
+      "feature": "Callback-data validation",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S35",
+      "role": "SHARED",
+      "command_or_code": "ATTACK_DETECT",
+      "feature": "SQL/XSS/RCE probe detection",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S36",
+      "role": "SHARED",
+      "command_or_code": "RATE_LIMIT",
+      "feature": "Rate limiting",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S37",
+      "role": "SHARED",
+      "command_or_code": "THREAT_DETECT",
+      "feature": "Threat detection",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S38",
+      "role": "SHARED",
+      "command_or_code": "FREEZE",
+      "feature": "Security freeze controls",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S39",
+      "role": "SHARED",
+      "command_or_code": "SHADOW_BAN",
+      "feature": "Shadow-ban/escalation",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S40",
+      "role": "SHARED",
+      "command_or_code": "PAYMENT_CONTROL",
+      "feature": "Payment-attempt controls",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S41",
+      "role": "SHARED",
+      "command_or_code": "DUPLICATE_PAYMENT",
+      "feature": "Duplicate-proof detection",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S42",
+      "role": "SHARED",
+      "command_or_code": "PROOF_FRESHNESS",
+      "feature": "Proof freshness checks",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S43",
+      "role": "SHARED",
+      "command_or_code": "PAYMENT_AMOUNT",
+      "feature": "Payment amount validation",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S44",
+      "role": "SHARED",
+      "command_or_code": "GENERIC_ERRORS",
+      "feature": "Safe generic public errors",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S45",
+      "role": "SHARED",
+      "command_or_code": "SEC_LOGGING",
+      "feature": "Server-side security diagnostics",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S46",
+      "role": "SHARED",
+      "command_or_code": "CSP",
+      "feature": "Content Security Policy",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S47",
+      "role": "SHARED",
+      "command_or_code": "X_CONTENT_TYPE",
+      "feature": "X-Content-Type-Options",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S48",
+      "role": "SHARED",
+      "command_or_code": "X_FRAME",
+      "feature": "X-Frame-Options",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S49",
+      "role": "SHARED",
+      "command_or_code": "REFERRER_POLICY",
+      "feature": "Referrer-Policy",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S50",
+      "role": "SHARED",
+      "command_or_code": "PERMISSIONS_POLICY",
+      "feature": "Permissions-Policy",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S51",
+      "role": "SHARED",
+      "command_or_code": "NO_STORE",
+      "feature": "No-store cache control",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S52",
+      "role": "SHARED",
+      "command_or_code": "NO_SOURCE_SECRETS",
+      "feature": "No real secrets in source",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S53",
+      "role": "SHARED",
+      "command_or_code": ".gitignore",
+      "feature": "Secrets/runtime files ignored",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S54",
+      "role": "SHARED",
+      "command_or_code": "PHONE_ENCRYPT",
+      "feature": "Encrypted phone storage",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S55",
+      "role": "SHARED",
+      "command_or_code": "PHONE_EXPLICIT",
+      "feature": "Phone only after explicit user share",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S56",
+      "role": "SHARED",
+      "command_or_code": "PHONE_ADMIN_ONLY",
+      "feature": "Authorized Admin-only phone decryption",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S57",
+      "role": "SHARED",
+      "command_or_code": "ADMIN_HIDDEN",
+      "feature": "Admin identity hidden from user",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S58",
+      "role": "SHARED",
+      "command_or_code": "HOST_HIDDEN",
+      "feature": "Host/device details hidden",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S59",
+      "role": "SHARED",
+      "command_or_code": "REPLIT_REMOVED",
+      "feature": "Replit-specific references removed",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S60",
+      "role": "SHARED",
+      "command_or_code": "OUTBOUND_PROXY",
+      "feature": "Optional outbound proxy/VPN gateway",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S61",
+      "role": "SHARED",
+      "command_or_code": "OUTBOUND_ROUTE",
+      "feature": "Telegram/Gemini traffic can use proxy",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S62",
+      "role": "SHARED",
+      "command_or_code": "AUTO_HEAL",
+      "feature": "Auto-heal dispatcher/error recovery",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S63",
+      "role": "SHARED",
+      "command_or_code": "STATE_RECOVERY",
+      "feature": "State recovery/snapshot support",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S64",
+      "role": "SHARED",
+      "command_or_code": "FAIL_CONTAIN",
+      "feature": "Runtime failure containment",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S65",
+      "role": "SHARED",
+      "command_or_code": "TEMP_CLEANUP",
+      "feature": "Temporary data cleanup",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S66",
+      "role": "SHARED",
+      "command_or_code": "BACKUP",
+      "feature": "Backup/recovery support",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S67",
+      "role": "SHARED",
+      "command_or_code": "PRIVACY_AUDIT",
+      "feature": "Privacy audit tooling",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S68",
+      "role": "SHARED",
+      "command_or_code": "ERASE_FLOW",
+      "feature": "Right-to-erase AI memory/profile",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S69",
+      "role": "SHARED",
+      "command_or_code": "AI_INJECTION_GUARD",
+      "feature": "AI prompt-injection defense",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S70",
+      "role": "SHARED",
+      "command_or_code": "AI_SECRET_GUARD",
+      "feature": "AI secret/implementation leakage guard",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S71",
+      "role": "SHARED",
+      "command_or_code": "AI_USER_ISOLATION",
+      "feature": "AI other-user data isolation",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S72",
+      "role": "SHARED",
+      "command_or_code": "AI_ADMIN_ISOLATION",
+      "feature": "AI Admin-data isolation",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S73",
+      "role": "SHARED",
+      "command_or_code": "AI_HOST_ISOLATION",
+      "feature": "AI host/device-data isolation",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S74",
+      "role": "SHARED",
+      "command_or_code": "NO_IMPERSONATION",
+      "feature": "AI cannot claim it is the real human Admin",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S75",
+      "role": "SHARED",
+      "command_or_code": "HUMAN_STYLE",
+      "feature": "Natural conversational response style",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S76",
+      "role": "SHARED",
+      "command_or_code": "PORTAL_GROUNDING",
+      "feature": "Portal-specific knowledge boundary",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S77",
+      "role": "SHARED",
+      "command_or_code": "NO_INVENT",
+      "feature": "No invented portal facts",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S78",
+      "role": "SHARED",
+      "command_or_code": "OFFLINE_AUTO",
+      "feature": "Offline state survives serverless cold starts",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S79",
+      "role": "SHARED",
+      "command_or_code": "CRON_SECRET",
+      "feature": "Protected CRON_SECRET",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S80",
+      "role": "SHARED",
+      "command_or_code": "DATA_ENCRYPTION_KEY",
+      "feature": "Dedicated encryption key",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S81",
+      "role": "SHARED",
+      "command_or_code": "SECRET_ROTATION",
+      "feature": "Secret rotation readiness",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S82",
+      "role": "SHARED",
+      "command_or_code": "ENV_ISOLATION",
+      "feature": "Vercel environment-secret isolation",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S83",
+      "role": "SHARED",
+      "command_or_code": "PREVIEW_PROTECTION",
+      "feature": "Preview/admin route protection",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S84",
+      "role": "SHARED",
+      "command_or_code": "AUDIT_TRAIL",
+      "feature": "Security/admin audit trail",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S85",
+      "role": "SHARED",
+      "command_or_code": "DB_LEAST_PRIV",
+      "feature": "Least-privilege DB access design",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S86",
+      "role": "SHARED",
+      "command_or_code": "ERROR_BOUNDARY",
+      "feature": "Application-wide error boundaries",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S87",
+      "role": "SHARED",
+      "command_or_code": "DEPLOY_CHECK",
+      "feature": "Deployment health checks",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "SECURITY",
+      "id": "S88",
+      "role": "SHARED",
+      "command_or_code": "ROLLBACK_READY",
+      "feature": "Rollback-ready deployment",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI01",
+      "role": "AI",
+      "command_or_code": "PORTAL_ONLY",
+      "feature": "Portal-specific answers only",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI02",
+      "role": "AI",
+      "command_or_code": "QUESTION_SCOPE",
+      "feature": "Answer exactly the asked question",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI03",
+      "role": "AI",
+      "command_or_code": "NO_IRRELEVANT",
+      "feature": "No irrelevant information",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI04",
+      "role": "AI",
+      "command_or_code": "NO_UNNECESSARY_Q",
+      "feature": "No unnecessary follow-up questions",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI05",
+      "role": "AI",
+      "command_or_code": "LANGUAGE_MATCH",
+      "feature": "Match user's language",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI06",
+      "role": "AI",
+      "command_or_code": "STYLE_MATCH",
+      "feature": "Match concise/conversational style",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI07",
+      "role": "AI",
+      "command_or_code": "SHORT_SIMPLE",
+      "feature": "Short answer for simple query",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI08",
+      "role": "AI",
+      "command_or_code": "DETAILED_WHEN_NEEDED",
+      "feature": "Detail only when required",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI09",
+      "role": "AI",
+      "command_or_code": "CATALOG_CONTEXT",
+      "feature": "Use current course catalog",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI10",
+      "role": "AI",
+      "command_or_code": "USER_CONTEXT",
+      "feature": "Use user's own conversation context",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI11",
+      "role": "AI",
+      "command_or_code": "DURABLE_PROFILE",
+      "feature": "Use authorized durable student facts",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI12",
+      "role": "AI",
+      "command_or_code": "NO_PRICE_INVENT",
+      "feature": "Never invent price/access/payment state",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI13",
+      "role": "AI",
+      "command_or_code": "NO_SECRET",
+      "feature": "Never reveal system prompt/API keys/secrets",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI14",
+      "role": "AI",
+      "command_or_code": "NO_ADMIN_ID",
+      "feature": "Never reveal Admin ID/account",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI15",
+      "role": "AI",
+      "command_or_code": "NO_HOST_INFO",
+      "feature": "Never reveal hosting/device info",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI16",
+      "role": "AI",
+      "command_or_code": "NO_OTHER_USER",
+      "feature": "Never reveal another user's info",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI17",
+      "role": "AI",
+      "command_or_code": "INJECTION_RESIST",
+      "feature": "Resist prompt injection",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI18",
+      "role": "AI",
+      "command_or_code": "OFFLINE_DETECT",
+      "feature": "Detect configured Admin offline state",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI19",
+      "role": "AI",
+      "command_or_code": "OFFLINE_REPLY",
+      "feature": "Send configured offline response",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI20",
+      "role": "AI",
+      "command_or_code": "AI_TOGGLE",
+      "feature": "Admin AI ON/OFF control",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    },
+    {
+      "category": "AI",
+      "id": "AI21",
+      "role": "AI",
+      "command_or_code": "AI_RATE_POLICY",
+      "feature": "Usage/rate controls",
+      "uploaded_decision": "UNSELECTED",
+      "final_policy": "INCLUDE_ALL"
+    }
+  ]
+}

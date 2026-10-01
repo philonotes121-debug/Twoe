@@ -1,0 +1,7 @@
+*.zip
+*.pyc
+__pycache__/
+.git/
+.gitignore
+_archive_original/
+requirements.txt.backup
