@@ -1,7 +1,7 @@
 """Compact Admin command surface. Legacy handlers remain available internally but are not exposed in Admin autocomplete."""
 import json
 from datetime import datetime
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command, CommandObject
 from aiogram.types import Message
 from sqlalchemy import select, func
@@ -13,7 +13,7 @@ router=Router()
 
 def admin_only(m:Message)->bool: return bool(m.from_user and m.from_user.id==config.ADMIN_ID)
 
-@router.message(Command("lms"))
+@router.message(Command("lms"), F.from_user.id == config.ADMIN_ID)
 async def lms(message:Message, command:CommandObject):
     if not admin_only(message): return
     args=(command.args or "").split()

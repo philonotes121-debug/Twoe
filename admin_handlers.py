@@ -116,7 +116,7 @@ async def cmd_addforall(message: Message):
     if not message.reply_to_message:
         return await message.answer("❌ Please reply to the Ad message/photo with /addforall")
         
-    await message.answer("📢 Broadcasting to ALL connected Groups & Channels... (Auto-deletes in 72h)")
+    await message.answer("📢 Broadcasting to ALL connected Groups & Channels... (Auto-deletes in 24h)")
     
     async with async_session() as session:
         chats = (await session.execute(select(ConnectedChat))).scalars().all()
@@ -128,7 +128,8 @@ async def cmd_addforall(message: Message):
     for chat in chats:
         try:
             sent_msg = await message.reply_to_message.copy_to(chat_id=chat.id)
-            asyncio.create_task(auto_delete_task(message.bot, chat.id, sent_msg.message_id, delay_hours=72))
+            import services as _sv
+            await _sv.schedule_delete(chat.id, sent_msg.message_id, hours=24, kind="broadcast")
             sent += 1
         except Exception:
             failed += 1
@@ -955,7 +956,9 @@ async def do_broadcast(message: Message, state: FSMContext):
     status_msg = await message.answer(f"📤 Sending... 0/{len(user_ids)}")
     for uid in user_ids:
         try:
-            await message.copy_to(chat_id=uid)
+            cp = await message.copy_to(chat_id=uid)
+            import services as _sv
+            await _sv.schedule_delete(uid, cp.message_id, hours=24, kind="broadcast")
             sent += 1
         except Exception:
             failed += 1
@@ -1071,7 +1074,7 @@ async def cmd_admin_help(message: Message):
         "<b>New Premium Features</b>\n"
         "/toggle_ai — Turn Auto-Reply ON/OFF\n"
         "/createpromo &lt;CODE&gt; &lt;PERCENT&gt; — Create Flash Sale discount\n"
-        "/addforall — Broadcast Ad to all groups (72h delete)\n"
+        "/addforall — Broadcast Ad to all groups (24h auto-delete)\n"
         "/weekly_report — Generate AI Business Report\n"
         "/restart — Clear temporary cache (no data lost)\n\n"
         "<b>Courses</b>\n"

@@ -127,52 +127,48 @@ async def global_error_handler(event: ErrorEvent):
 @dp.message(__import__("aiogram").filters.Command("menu"))
 async def _menu_cmd(message):
     if message.from_user.id == ADMIN_ID: return
-    u = await sv.ensure_user(message.from_user)
-    if not u.phone_verified:
-        await premium.show_phone_gate(message); return
-    await message.answer("📚 LMS", reply_markup=__import__("keyboards").main_menu_kb())
+    import access
+    await sv.ensure_user(message.from_user)
+    await message.answer(f"📚 <b>{config.BOT_NAME}</b>\n\nChoose an option:", reply_markup=await access.menu_kb_for(message.from_user.id))
 
 
 @dp.message(__import__("aiogram").filters.Command("account"))
 async def _account_cmd(message):
     if message.from_user.id == ADMIN_ID: return
-    u=await sv.ensure_user(message.from_user)
-    if not u.phone_verified: return await premium.show_phone_gate(message)
-    from premium import active_membership
-    comm=await active_membership(u.id,"community"); ca=await active_membership(u.id,"ca_tracker")
-    from access import status_of
-    st=await status_of(u.id)
-    await message.answer(f"👤 <b>Account</b>\nLMS: {st}\nCommunity: {'active' if comm else 'inactive'}\nCA Tracker: {'active' if ca else 'inactive'}", reply_markup=__import__("keyboards").main_menu_kb())
+    import access
+    await sv.ensure_user(message.from_user)
+    await message.answer(await access.account_text(message.from_user.id), reply_markup=await access.menu_kb_for(message.from_user.id))
 
 
 @dp.message(__import__("aiogram").filters.Command("study"))
 async def _study_cmd(message):
     if message.from_user.id == ADMIN_ID: return
-    u=await sv.ensure_user(message.from_user)
-    if not u.phone_verified: return await premium.show_phone_gate(message)
-    await message.answer("🎯 Study tools: target, streak and reminders are available in LMS.", reply_markup=__import__("keyboards").main_menu_kb())
+    import access
+    await sv.ensure_user(message.from_user)
+    await message.answer("🎯 <b>Study tools</b>\nTarget, streak aur reminders LMS Mini App me available hain. LMS lock ho to /lms se unlock karein.",
+                         reply_markup=await access.menu_kb_for(message.from_user.id))
 
 
 @dp.message(__import__("aiogram").filters.Command("support"))
-async def _support_cmd(message):
+async def _support_cmd(message, state):
     if message.from_user.id == ADMIN_ID: return
-    u=await sv.ensure_user(message.from_user)
-    if not u.phone_verified: return await premium.show_phone_gate(message)
-    await message.answer("💬 Send your issue here. It will reach Admin.", reply_markup=__import__("keyboards").contact_cancel_kb())
+    await sv.ensure_user(message.from_user)
+    from user_handlers import ContactFlow
+    await state.set_state(ContactFlow.waiting_for_message)
+    await message.answer("💬 <b>Support</b>\nApna issue yahin bhejiye (text/photo/document). Ye seedha Admin tak jayega.", reply_markup=__import__("keyboards").contact_cancel_kb())
 
 
 @dp.message(__import__("aiogram").filters.Command("ask"))
 async def _ask_cmd(message, state):
     if message.from_user.id == ADMIN_ID: return
-    u=await sv.ensure_user(message.from_user)
-    if not u.phone_verified: return await premium.show_phone_gate(message)
+    await sv.ensure_user(message.from_user)
     from user_handlers import ProfessorAIFlow
     await state.set_state(ProfessorAIFlow.chatting)
-    await message.answer("🤖 AI Helper ready. Apna sawaal bhejiye.", reply_markup=__import__("aiogram").types.InlineKeyboardMarkup(inline_keyboard=[[__import__("aiogram").types.InlineKeyboardButton(text="⬅ LMS",callback_data="menu:main")]]))
+    await message.answer("🤖 AI Helper ready. Apna sawaal bhejiye.", reply_markup=__import__("aiogram").types.InlineKeyboardMarkup(inline_keyboard=[[__import__("aiogram").types.InlineKeyboardButton(text="⬅ Menu",callback_data="menu:main")]]))
 
 USER_COMMANDS = [
-    BotCommand(command="start", description="Verify & open LMS"),
-    BotCommand(command="menu", description="Open LMS"),
+    BotCommand(command="start", description="Start / main menu"),
+    BotCommand(command="lms", description="Unlock LMS (verify mobile)"),
     BotCommand(command="trending", description="Trending (private chat)"),
     BotCommand(command="account", description="Account, access & orders"),
     BotCommand(command="referral", description="Referral & rewards"),
@@ -314,7 +310,7 @@ async def lifespan(app: FastAPI):
             logger.exception("Failed to fetch bot username via get_me() — Buy Now deep links will break!")
 
         try:
-            await bot.set_my_commands([BotCommand(command="start", description="Verify & open LMS")], scope=BotCommandScopeDefault())
+            await bot.set_my_commands([BotCommand(command="start", description="Join backup channel & start")], scope=BotCommandScopeDefault())
             if ADMIN_ID:
                 await bot.set_my_commands(ADMIN_COMMANDS, scope=BotCommandScopeChat(chat_id=ADMIN_ID))
         except TelegramBadRequest:

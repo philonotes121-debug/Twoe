@@ -1,6 +1,12 @@
-"""LMS access control — the course library is opened ONLY for users the admin approves.
+"""LMS access control.
 
-Flow: user taps Request Access -> admin gets Approve/Deny card -> user is notified with next step.
+Flow:
+1. /start -> backup channel join is mandatory (handled in user_handlers + security middleware).
+2. After joining, the user gets the normal bot (10 commands) without LMS.
+3. /lms (or "Unlock LMS") -> user verifies mobile via Telegram contact button.
+4. Verification creates a pending LmsAccess request and notifies Admin with Approve/Deny.
+5. Admin approves -> user is notified and the LMS Mini App unlocks.
+
 Enforced in the bot (middleware) AND on the Mini App API (signed initData + approved check).
 """
 import logging
@@ -21,8 +27,8 @@ logger = logging.getLogger(__name__)
 router = Router()
 IS_ADMIN = F.from_user.id == ADMIN_ID
 
-# Catalogue-related callbacks and commands that need approval.
-GATED_CB = ("menu:", "sec:", "topsec:", "upscopt:", "allcourses:", "mycourses:", "buy", "pay", "gc", "promo")
+# Catalogue-related callbacks and commands that need LMS approval.
+GATED_CB = ("menu:", "sec:", "topsec:", "upscopt:", "allcourses:", "mycourses:", "buy", "pay", "gc", "promo", "trending:")
 GATED_CMDS = ("/courses", "/trending", "/applypromo", "/mycourses")
 
 
@@ -45,45 +51,97 @@ async def is_approved(user_id: int) -> bool:
     return (await status_of(user_id)) == "approved"
 
 
-def request_kb(status: str) -> InlineKeyboardMarkup:
-    rows = []
-    if status == "none":
-        rows.append([InlineKeyboardButton(text="🔓 Request Access", callback_data="lms:req")])
-    rows.append([InlineKeyboardButton(text="🪙 Coins & Referrals", callback_data="coin:home"),
-                 InlineKeyboardButton(text="💬 Contact Support", callback_data="contact:open")])
-    return InlineKeyboardMarkup(inline_keyboard=rows)
+async def has_lms(user_id: int) -> bool:
+    """Phone verified AND admin approved (or gate off)."""
+    if user_id == ADMIN_ID:
+        return True
+    u = await sv.ensure_user_by_id(user_id)
+    if not u or u.is_banned or not u.phone_verified:
+        return False
+    return await is_approved(user_id)
+
+
+async def menu_kb_for(user_id: int) -> InlineKeyboardMarkup:
+    from keyboards import main_menu_kb, home_kb
+    return main_menu_kb() if await has_lms(user_id) else home_kb()
 
 
 def locked_text(status: str) -> str:
     if status == "pending":
-        return card("warn", "Request received", ["Your access request is under review."],
-                    "No action needed. You will be notified once it is approved.")
+        return card("warn", "LMS request under review", ["Your mobile is verified and the request reached Admin."],
+                    "You will get a notification here as soon as Admin approves.")
     if status == "denied":
-        return card("err", "Access not granted", ["Your request was not approved."],
-                    "Use Contact Support if you believe this is a mistake.")
-    return card("info", "Access required", ["The course library opens by approval only."],
-                "Tap Request Access. You will be notified here.")
+        return card("err", "LMS access not granted", ["Admin did not approve your last request."],
+                    "Tap Request Again or contact Support.")
+    return card("info", "LMS locked", ["Verify your mobile number to request LMS access."],
+                "Tap the Verify Mobile Number button below.")
 
 
-async def _joined_or_prompt(bot, user, reply) -> bool:
-    """Backup-channel join comes first (also required for referral credit). True = joined."""
-    from keyboards import join_channel_kb
-    st = await sv.backup_status(bot, user.id)
-    if st is False:
-        await reply(card("warn", "Join required", ["Join the backup channel to continue."],
-                         "Tap Join, then press Continue."), reply_markup=join_channel_kb(config.BACKUP_CHANNEL))
-        return False
-    if st is True:
-        async with async_session() as s:
-            u = await s.get(User, user.id)
-            if u and not u.has_joined_backup_channel:
-                u.has_joined_backup_channel = True
-                await s.commit()
-    return True
+def _status_kb(status: str) -> InlineKeyboardMarkup:
+    rows = []
+    if status == "denied":
+        rows.append([InlineKeyboardButton(text="🔁 Request Again", callback_data="lms:req")])
+    rows.append([InlineKeyboardButton(text="💬 Contact Support", callback_data="contact:open")])
+    rows.append([InlineKeyboardButton(text="⬅ Menu", callback_data="menu:main")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def decision_kb(uid: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[[
+        InlineKeyboardButton(text="✅ Approve LMS", callback_data=f"lms:ok:{uid}"),
+        InlineKeyboardButton(text="❌ Deny", callback_data=f"lms:no:{uid}")]])
+
+
+async def submit_request(bot, tg_user, phone_tail: str = "") -> str:
+    """Create/refresh a pending request and notify Admin. Returns the resulting status."""
+    st = await status_of(tg_user.id)
+    if st == "approved":
+        return st
+    async with async_session() as s:
+        row = await s.get(LmsAccess, tg_user.id)
+        if not row:
+            row = LmsAccess(user_id=tg_user.id)
+            s.add(row)
+        row.status = "pending"
+        row.requested_at = datetime.utcnow()
+        row.decided_at = None
+        await s.commit()
+        refs = (await s.execute(select(func.count()).select_from(User).where(User.referrer_id == tg_user.id))).scalar() or 0
+    lines = [f"Name: {esc(tg_user.full_name)}", f"Username: @{esc(tg_user.username or '—')}",
+             f"User ID: <code>{tg_user.id}</code>", "Mobile: ✅ verified" + (f" (…{esc(phone_tail)})" if phone_tail else ""),
+             f"Referred users: {refs}"]
+    try:
+        await bot.send_message(ADMIN_ID, card("info", "🔔 New LMS access request", lines, "Approve or deny below.", raw=True),
+                               reply_markup=decision_kb(tg_user.id))
+    except Exception:
+        logger.exception("LMS request admin notify failed")
+    return "pending"
+
+
+async def user_lms_entry(message: Message, tg_user) -> None:
+    """Single entry point for /lms, /menu and the Unlock LMS button."""
+    from keyboards import main_menu_kb, phone_verification_kb
+    u = await sv.ensure_user(tg_user)
+    if u.is_banned:
+        await message.answer("🚫 Access unavailable.")
+        return
+    if await sv.get_setting("lockdown", "0") == "1":
+        await message.answer(card("warn", "LMS unavailable", ["Access is temporarily restricted."], "Try again later."))
+        return
+    if not u.phone_verified:
+        await message.answer(locked_text("none"), reply_markup=phone_verification_kb())
+        return
+    st = await status_of(u.id)
+    if st == "approved":
+        await message.answer(card("ok", "LMS unlocked", ["Open the LMS Mini App below."]), reply_markup=main_menu_kb())
+        return
+    if st == "none":
+        st = await submit_request(message.bot, tg_user)
+    await message.answer(locked_text(st), reply_markup=_status_kb(st))
 
 
 class LmsGateMiddleware(BaseMiddleware):
-    """Inner middleware (runs only for updates that matched a handler)."""
+    """Inner middleware: only LMS/catalogue actions require phone verification + Admin approval."""
     async def __call__(self, handler, event, data):
         user = getattr(event, "from_user", None)
         if not user or user.id == ADMIN_ID:
@@ -91,70 +149,75 @@ class LmsGateMiddleware(BaseMiddleware):
         is_cb = isinstance(event, CallbackQuery)
         if is_cb:
             d = event.data or ""
-            # System subscription products may be purchased before LMS approval; the paid plan is the access grant.
+            # Paid community/CA plans are their own access grant and can be bought before LMS approval.
             if d.startswith("buy:"):
                 try:
                     from database import Course
-                    cid=int(d.split(":",1)[1])
+                    cid = int(d.split(":", 1)[1])
                     async with async_session() as s:
-                        product=await s.get(Course,cid)
-                    if product and product.system_product in ("community","ca_tracker"):
-                        return await handler(event,data)
+                        product = await s.get(Course, cid)
+                    if product and product.system_product in ("community", "ca_tracker"):
+                        return await handler(event, data)
                 except Exception:
                     pass
-            if d != "checkjoin" and not d.startswith(GATED_CB):
+            if not d.startswith(GATED_CB):
                 return await handler(event, data)
+            if d in ("menu:main", "menu:back") and not await has_lms(user.id):
+                # Non-LMS users go back to the normal home menu instead of a lock screen.
+                state = data.get("state")
+                if state is not None:
+                    await state.clear()
+                from keyboards import home_kb
+                try:
+                    await event.message.edit_text(f"📚 <b>{config.BOT_NAME}</b>\n\nChoose an option:", reply_markup=home_kb())
+                except Exception:
+                    await event.message.answer(f"📚 <b>{config.BOT_NAME}</b>\n\nChoose an option:", reply_markup=home_kb())
+                await event.answer()
+                return None
         elif isinstance(event, Message):
             t = (event.text or "").strip()
-            if not (t.startswith("/start") or t.startswith(GATED_CMDS)):
+            if not t.startswith(GATED_CMDS):
                 return await handler(event, data)
         else:
             return await handler(event, data)
 
-        # User-facing LMS access is unlocked by phone verification only.
-        # LmsAccess remains an administrative audit/request record and no longer
-        # blocks the verified user's Mini App.
-        u = await sv.ensure_user(user)
-        if u.phone_verified and await sv.get_setting("lockdown", "0") != "1":
+        if await has_lms(user.id) and await sv.get_setting("lockdown", "0") != "1":
             return await handler(event, data)
         if is_cb:
-            await event.answer()
-            reply = event.message.answer
+            await event.answer("🔒 LMS locked — verify & get Admin approval first.", show_alert=False)
+            await user_lms_entry(event.message, user)
         else:
-            reply = event.answer
-        if not u.phone_verified:
-            from premium import show_phone_gate
-            await show_phone_gate(event.message if is_cb else event)
-            return None
-        await reply(card("warn", "LMS unavailable", ["Access is temporarily restricted."], "Try again later."), reply_markup=InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="💬 Contact Support", callback_data="contact:open")]]))
+            await user_lms_entry(event, user)
         return None
 
 
-def decision_kb(uid: int) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[[
-        InlineKeyboardButton(text="✅ Approve", callback_data=f"lms:ok:{uid}"),
-        InlineKeyboardButton(text="❌ Deny", callback_data=f"lms:no:{uid}")]])
+@router.message(Command("lms"), ~IS_ADMIN)
+async def lms_user_cmd(message: Message):
+    if message.chat.type != "private":
+        return
+    await user_lms_entry(message, message.from_user)
+
+
+@router.callback_query(F.data == "lms:open")
+async def lms_open_cb(call: CallbackQuery):
+    await call.answer()
+    await user_lms_entry(call.message, call.from_user)
 
 
 @router.callback_query(F.data == "lms:req")
 async def request_access(call: CallbackQuery):
-    u = call.from_user
-    st = await status_of(u.id)
-    if st in ("pending", "approved", "denied"):
-        await call.message.answer(locked_text(st) if st != "approved" else
-                                  card("ok", "Already approved", nxt="Send /start to open the library."))
-        return await call.answer()
-    await sv.ensure_user(u)
-    async with async_session() as s:
-        s.add(LmsAccess(user_id=u.id, status="pending"))
-        await s.commit()
-        refs = (await s.execute(select(func.count()).select_from(User).where(User.referrer_id == u.id))).scalar() or 0
-    await call.message.answer(locked_text("pending"))
+    u = await sv.ensure_user(call.from_user)
     await call.answer()
-    await call.bot.send_message(ADMIN_ID, card(
-        "info", "LMS access request",
-        [f"Name: {esc(u.full_name)}", f"Username: @{esc(u.username or '—')}", f"User ID: <code>{u.id}</code>",
-         f"Referred users: {refs}"], "Approve or deny below.", raw=True), reply_markup=decision_kb(u.id))
+    if not u.phone_verified:
+        return await user_lms_entry(call.message, call.from_user)
+    st = await status_of(u.id)
+    if st == "approved":
+        from keyboards import main_menu_kb
+        return await call.message.answer(card("ok", "Already approved"), reply_markup=main_menu_kb())
+    if st == "pending":
+        return await call.message.answer(locked_text(st), reply_markup=_status_kb(st))
+    st = await submit_request(call.bot, call.from_user)
+    await call.message.answer(locked_text(st), reply_markup=_status_kb(st))
 
 
 @router.callback_query(IS_ADMIN, F.data.startswith(("lms:ok:", "lms:no:")))
@@ -162,32 +225,31 @@ async def decide(call: CallbackQuery):
     _, act, uid = call.data.split(":")
     uid = int(uid)
     approve = act == "ok"
-    async with async_session() as s:
-        row = await s.get(LmsAccess, uid)
-        if not row:
-            row = LmsAccess(user_id=uid)
-            s.add(row)
-        row.status = "approved" if approve else "denied"
-        row.decided_at = datetime.utcnow()
-        await s.commit()
+    await _set(uid, "approved" if approve else "denied")
     try:
         await call.message.edit_text(call.message.html_text + ("\n\n✅ APPROVED" if approve else "\n\n❌ DENIED"))
     except Exception:
         pass
     await call.answer("Done")
-    await _notify_user(call.bot, uid, approve)
+    await notify_user(call.bot, uid, approve)
 
 
-async def _notify_user(bot, uid: int, approve: bool):
+async def notify_user(bot, uid: int, approve: bool):
+    from keyboards import main_menu_kb, home_kb
     try:
         if approve:
-            await bot.send_message(uid, card("ok", "Access approved", ["The course library is now open."],
-                                             "Send /start to browse courses."))
+            await bot.send_message(uid, card("ok", "🎉 LMS unlocked", ["Admin approved your request.", "The LMS Mini App is now open for you."],
+                                             "Tap Open LMS below."), reply_markup=main_menu_kb())
         else:
-            await bot.send_message(uid, card("err", "Access not granted", ["Your request was not approved."],
-                                             "Use /contact if you need help."))
+            await bot.send_message(uid, card("err", "LMS access not granted", ["Admin did not approve your request."],
+                                             "You can request again or contact Support."), reply_markup=_status_kb("denied"))
+            await bot.send_message(uid, "Menu:", reply_markup=home_kb())
     except Exception:
-        pass
+        logger.warning("LMS decision notify failed for %s", uid)
+
+
+# Backwards-compatible alias.
+_notify_user = notify_user
 
 
 def _uid(command: CommandObject):
@@ -226,7 +288,7 @@ async def lms_approve(message: Message, command: CommandObject):
     if not uid:
         return await message.answer("Use: /lms_approve USER_ID")
     await _set(uid, "approved")
-    await _notify_user(message.bot, uid, True)
+    await notify_user(message.bot, uid, True)
     await message.answer(card("ok", "Approved", [f"User {uid}"]))
 
 
@@ -236,6 +298,7 @@ async def lms_deny(message: Message, command: CommandObject):
     if not uid:
         return await message.answer("Use: /lms_deny USER_ID")
     await _set(uid, "denied")
+    await notify_user(message.bot, uid, False)
     await message.answer(card("err", "Denied", [f"User {uid}"]))
 
 
@@ -266,3 +329,45 @@ async def lms_gate(message: Message, command: CommandObject):
                                          "Use /lms_gate on or /lms_gate off"))
     await sv.set_setting("lms_gate", "1" if v == "on" else "0")
     await message.answer(card("ok", f"LMS gate {v.upper()}"))
+
+
+# ---------------- Home-menu buttons (previously had no handlers) ----------------
+@router.callback_query(F.data == "account:open")
+async def account_cb(call: CallbackQuery):
+    await call.answer()
+    await call.message.answer(await account_text(call.from_user.id), reply_markup=await menu_kb_for(call.from_user.id))
+
+
+async def account_text(uid: int) -> str:
+    from premium import active_membership
+    u = await sv.ensure_user_by_id(uid)
+    comm = await active_membership(uid, "community")
+    ca = await active_membership(uid, "ca_tracker")
+    st = await status_of(uid)
+    lms = "✅ unlocked" if (u and u.phone_verified and st == "approved") else (
+        "⏳ pending Admin approval" if st == "pending" else "🔒 locked (use /lms)")
+    return (f"👤 <b>Account</b>\n"
+            f"Backup channel: {'✅ joined' if u and u.has_joined_backup_channel else '❌ not joined'}\n"
+            f"Mobile: {'✅ verified' if u and u.phone_verified else '❌ not verified'}\n"
+            f"LMS: {lms}\n"
+            f"Community: {'✅ active till ' + comm.expires_at.strftime('%d %b %Y') if comm else 'inactive'}\n"
+            f"CA Tracker: {'✅ active till ' + ca.expires_at.strftime('%d %b %Y') if ca else 'inactive'}")
+
+
+@router.callback_query(F.data == "referral:open")
+async def referral_cb(call: CallbackQuery):
+    await call.answer()
+    from premium import send_referral
+    await send_referral(call.message, call.from_user.id)
+
+
+@router.callback_query(F.data == "countdown:open")
+async def countdown_cb(call: CallbackQuery):
+    await call.answer()
+    try:
+        exam = datetime.strptime(config.EXAM_DATE, "%Y-%m-%d").date()
+        days = (exam - datetime.utcnow().date()).days
+        text = f"📅 <b>{esc(config.EXAM_NAME)}</b>\n\n⏳ <b>{max(days, 0)} days</b> left ({exam:%d %b %Y})."
+    except Exception:
+        text = "📅 Countdown date is not configured."
+    await call.message.answer(text, reply_markup=await menu_kb_for(call.from_user.id))

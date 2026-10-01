@@ -212,9 +212,51 @@ async def on_left_member(message: Message):
     await sv.notify_admin(message.bot, f"➖ {esc(m.full_name)} left {esc(message.chat.title or '')}", kind="leave")
 
 
+def _is_backup_chat(chat) -> bool:
+    ref = config.backup_chat_ref()
+    if not ref:
+        return False
+    if isinstance(ref, int):
+        return chat.id == ref
+    uname = (getattr(chat, "username", None) or "").lower()
+    return bool(uname) and ("@" + uname) == str(ref).lower()
+
+
+async def _backup_member_changed(ev: ChatMemberUpdated):
+    new = ev.new_chat_member
+    tg = new.user
+    if tg.is_bot:
+        return
+    joined = new.status in ("member", "administrator", "creator") or (new.status == "restricted" and getattr(new, "is_member", False))
+    async with async_session() as s:
+        u = await s.get(User, tg.id)
+        if not u:
+            if not joined:
+                return
+            u = User(id=tg.id, username=tg.username, first_name=tg.first_name)
+            s.add(u)
+        was = bool(u.has_joined_backup_channel)
+        u.has_joined_backup_channel = joined
+        await s.commit()
+    if joined and not was:
+        await sv.set_user_commands(ev.bot, tg.id, verified=True)
+        try:
+            import access
+            await ev.bot.send_message(tg.id, "✅ <b>Backup channel verified!</b>\n\nBot ab aapke liye open hai. "
+                                             "LMS ke liye /lms se mobile verify karein.",
+                                      reply_markup=await access.menu_kb_for(tg.id))
+        except Exception:
+            pass  # user has not started the bot yet — /start will verify
+    elif not joined and was:
+        await sv.set_user_commands(ev.bot, tg.id, verified=False)
+
+
 @router.chat_member()
 async def on_chat_member(ev: ChatMemberUpdated):
-    """Channels (no service messages): join/leave via chat_member updates."""
+    """Channels (no service messages): join/leave via chat_member updates.
+    For the backup channel this also verifies the user in the background."""
+    if _is_backup_chat(ev.chat):
+        await _backup_member_changed(ev)
     if ev.chat.type != "channel":
         return
     old, new = ev.old_chat_member.status, ev.new_chat_member.status

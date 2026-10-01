@@ -114,17 +114,43 @@ async def _notify_admin_of_start(bot, tg_user, is_new: bool, user: User):
 
 
 async def _is_member_of_backup_channel(bot, user_id: int) -> bool:
-    try:
-        member = await bot.get_chat_member(chat_id=BACKUP_CHANNEL, user_id=user_id)
-        return member.status in ("member", "administrator", "creator")
-    except TelegramForbiddenError:
-        logger.error(f"Backup-channel check failed for user {user_id}: bot is not an admin of {BACKUP_CHANNEL}.")
-        return False
-    except TelegramBadRequest:
-        logger.warning(f"Backup-channel check: user {user_id} not found in {BACKUP_CHANNEL}.")
-        return False
-    except Exception:
-        return False
+    """Live check. If the bot cannot check (not admin in channel), fail open so users
+    are not locked out; Admin gets an alert from sv.backup_status to fix permissions."""
+    if not config.REQUIRE_BACKUP_FOR_FEATURES:
+        return True
+    st = await sv.backup_status(bot, user_id)
+    return st is not False
+
+
+async def _mark_backup_joined(user_id: int, joined: bool = True) -> None:
+    async with async_session() as session:
+        u = await session.get(User, user_id)
+        if u:
+            u.has_joined_backup_channel = joined
+            await session.commit()
+
+
+def _join_prompt_text(first_name: str | None) -> str:
+    return (f"👋 Welcome to <b>{BOT_NAME}</b>{', ' + first_name if first_name else ''}!\n\n"
+            "🔒 Bot use karne ke liye <b>Backup Channel join karna mandatory hai</b>.\n\n"
+            "1️⃣ Neeche button se channel join karein\n"
+            "2️⃣ Join hote hi bot aapko automatically verify kar dega\n"
+            "   (ya \"I've Joined — Continue\" dabayein)")
+
+
+async def _send_home(message: Message, tg_user, *, edit: bool = False) -> None:
+    import access
+    kb = await access.menu_kb_for(tg_user.id)
+    lms_line = ("📚 LMS Mini App open karne ke liye <b>Open LMS</b> dabayein." if await access.has_lms(tg_user.id)
+                else "📚 LMS chahiye? /lms se mobile verify karein — Admin approve karte hi LMS unlock ho jayega.")
+    text = f"✅ {get_welcome_message(tg_user.first_name)}\n\n{get_line()}\n\n{lms_line}"
+    if edit:
+        try:
+            await message.edit_text(text, reply_markup=kb)
+            return
+        except Exception:
+            pass
+    await message.answer(text, reply_markup=kb)
 
 
 @router.message(CommandStart(deep_link=True))
@@ -136,15 +162,9 @@ async def cmd_start(message: Message, command: CommandObject, state: FSMContext)
     if user.is_banned:
         await message.answer("🚫 Access unavailable.")
         return
-
-    # Phone verification is the first LMS unlock step. Do not expose menus or course data before consented contact share.
-    if not user.phone_verified and message.chat.type == "private":
-        from premium import show_phone_gate
-        await sv.set_user_commands(message.bot, user.id, verified=False)
-        await show_phone_gate(message)
+    if message.chat.type != "private":
         return
 
-    await sv.set_user_commands(message.bot, user.id, verified=True)
     pending_course_id = None
     if command.args and command.args.startswith("buy_"):
         try:
@@ -152,63 +172,45 @@ async def cmd_start(message: Message, command: CommandObject, state: FSMContext)
         except ValueError:
             pending_course_id = None
 
-    if config.REQUIRE_BACKUP_FOR_FEATURES and not user.has_joined_backup_channel:
+    # Step 1 (mandatory): backup channel join. Always re-checked live on /start.
+    if config.REQUIRE_BACKUP_FOR_FEATURES:
         is_member = await _is_member_of_backup_channel(message.bot, message.from_user.id)
         if not is_member:
+            await _mark_backup_joined(user.id, False)
+            await sv.set_user_commands(message.bot, user.id, verified=False)
             if pending_course_id:
                 await state.update_data(pending_course_id=pending_course_id)
-            await message.answer(
-                f"👋 Welcome to <b>{BOT_NAME}</b>!\n\n"
-                "Join the backup channel to continue.",
-                reply_markup=join_channel_kb(BACKUP_CHANNEL),
-            )
+            await message.answer(_join_prompt_text(message.from_user.first_name),
+                                 reply_markup=join_channel_kb(config.backup_link() or BACKUP_CHANNEL))
             return
-        async with async_session() as session:
-            u = await session.get(User, user.id)
-            u.has_joined_backup_channel = True
-            await session.commit()
+        await _mark_backup_joined(user.id, True)
 
+    # Step 2: normal bot (10 commands). LMS stays locked until /lms verify + Admin approval.
+    await sv.set_user_commands(message.bot, user.id, verified=True)
     if pending_course_id:
         await _show_buy_screen(message, pending_course_id, tg_user=message.from_user)
         return
-
-    welcome = get_welcome_message(message.from_user.first_name)
-    await message.answer(
-        f"👋 {welcome}\n\n{get_line()}\n\n"
-        "Open the LMS Mini App to browse the course catalogue.",
-        reply_markup=_with_ai_button(main_menu_kb()),
-    )
+    await _send_home(message, message.from_user)
 
 
 @router.callback_query(F.data == "checkjoin")
 async def cb_check_join(call: CallbackQuery, state: FSMContext):
     is_member = await _is_member_of_backup_channel(call.bot, call.from_user.id)
     if not is_member:
-        await call.answer(
-            "We still can't see you in the channel — join, then try again 🙏",
-            show_alert=True,
-        )
+        await call.answer("Abhi aap channel me nahi dikh rahe — pehle join karein, phir dobara dabayein 🙏", show_alert=True)
         return
-    async with async_session() as session:
-        u = await session.get(User, call.from_user.id)
-        if u:
-            u.has_joined_backup_channel = True
-            await session.commit()
+    await sv.ensure_user(call.from_user)
+    await _mark_backup_joined(call.from_user.id, True)
+    await sv.set_user_commands(call.bot, call.from_user.id, verified=True)
 
     data = await state.get_data()
     pending_course_id = data.get("pending_course_id")
+    await call.answer("✅ Verified!")
     if pending_course_id:
         await state.update_data(pending_course_id=None)
         await _show_buy_screen(call.message, pending_course_id, tg_user=call.from_user, edit=True)
-        await call.answer()
         return
-
-    welcome = get_welcome_message(call.from_user.first_name)
-    await call.message.edit_text(
-        f"✅ Verified! {welcome}\n\n{get_line()}\n\nChoose a section below:",
-        reply_markup=_with_ai_button(main_menu_kb()),
-    )
-    await call.answer()
+    await _send_home(call.message, call.from_user, edit=True)
 
 
 @router.callback_query(F.data.in_(["menu:main", "menu:back"]))
