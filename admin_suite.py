@@ -6,7 +6,7 @@ not exposed in the Admin bot command menu.
 import json
 from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
-from aiogram import Router
+from aiogram import Router, F
 from aiogram.filters import Command, CommandObject
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from sqlalchemy import select, func
@@ -70,7 +70,7 @@ async def adminhelp(m: Message):
     ])
 
 
-@router.message(Command("lms"))
+@router.message(Command("lms"), F.from_user.id == config.ADMIN_ID)
 async def lms(m: Message, command: CommandObject):
     if not admin_only(m): return
     a = (command.args or "").split()

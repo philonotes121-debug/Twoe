@@ -369,21 +369,19 @@ async def _user_has_joined_backup(bot_instance, user_id: int, tg_user) -> bool:
         if u and u.has_joined_backup_channel:
             return True
 
-    if not bot_instance or not BACKUP_CHANNEL:
-        return False
+    if not bot_instance or not config.REQUIRE_BACKUP_FOR_FEATURES:
+        return True
 
     last_check = backup_check_cooldown.get(user_id, 0)
     if time.time() - last_check < BACKUP_CHECK_COOLDOWN_SEC:
         return False  # too soon to re-check live — treat as still-not-joined this time
     backup_check_cooldown[user_id] = time.time()
 
-    try:
-        member = await bot_instance.get_chat_member(chat_id=BACKUP_CHANNEL, user_id=user_id)
-        joined = member.status in ("member", "administrator", "creator")
-    except Exception:
-        joined = False
-
-    if joined:
+    import services as _sv
+    st = await _sv.backup_status(bot_instance, user_id)
+    if st is None:
+        return True  # cannot verify (bot not admin in channel) — fail open, Admin is alerted
+    if st:
         async with async_session() as session:
             u = await session.get(User, user_id)
             if not u:
@@ -391,8 +389,7 @@ async def _user_has_joined_backup(bot_instance, user_id: int, tg_user) -> bool:
                 session.add(u)
             u.has_joined_backup_channel = True
             await session.commit()
-
-    return joined
+    return bool(st)
 
 
 def _backup_join_keyboard():
@@ -401,7 +398,7 @@ def _backup_join_keyboard():
     button so this gate never crashes if that changes."""
     try:
         from keyboards import join_channel_kb
-        return join_channel_kb(BACKUP_CHANNEL)
+        return join_channel_kb(config.backup_link() or BACKUP_CHANNEL)
     except Exception:
         from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
         link = BACKUP_CHANNEL if str(BACKUP_CHANNEL).startswith("http") else f"https://t.me/{str(BACKUP_CHANNEL).lstrip('@')}"
@@ -427,6 +424,8 @@ class BackupGateCallbackMiddleware(BaseMiddleware):
             return await handler(event, data)
 
         if event.data and event.data.startswith("checkjoin"):
+            return await handler(event, data)
+        if not event.message or event.message.chat.type != "private":
             return await handler(event, data)
 
         bot_instance = data.get('bot')
@@ -528,13 +527,13 @@ class SecurityMiddleware(BaseMiddleware):
         # Optional backup-channel enforcement. Latest product rule makes phone
         # verification the LMS gate; backup membership remains available for
         # referral qualification and can be enabled globally when required.
-        if config.REQUIRE_BACKUP_FOR_FEATURES and not (is_command_msg and payload_content.startswith("/start")):
+        if (config.REQUIRE_BACKUP_FOR_FEATURES and event.chat.type == "private"
+                and not (is_command_msg and payload_content.startswith("/start"))):
             if not await _user_has_joined_backup(bot_instance, user_id, event.from_user):
                 try:
                     await event.answer(
-                        "🔒 <b>Backup channel join karna mandatory hai</b> bot ke features use karne ke liye — "
-                        "chahe DM ho ya group.\n\nJoin karke neeche button dabao verify karne ke liye, "
-                        "phir apna command/message dobara bhejo.",
+                        "🔒 <b>Backup channel join karna mandatory hai</b> bot use karne ke liye.\n\n"
+                        "Join karte hi bot aapko automatically verify kar dega, ya neeche button dabayein.",
                         parse_mode="HTML",
                         reply_markup=_backup_join_keyboard(),
                     )

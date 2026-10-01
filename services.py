@@ -358,8 +358,8 @@ async def set_user_commands(bot: Bot, user_id: int, *, verified: bool) -> None:
     """Show only a compact User menu; Admin gets a separate menu in main.py."""
     from aiogram.types import BotCommand, BotCommandScopeChat
     cmds = [
-        BotCommand(command="start", description="Verify & open LMS"),
-        BotCommand(command="menu", description="Open LMS"),
+        BotCommand(command="start", description="Start / main menu"),
+        BotCommand(command="lms", description="Unlock LMS (verify mobile)"),
         BotCommand(command="trending", description="Trending (private chat)"),
         BotCommand(command="account", description="Account, access & orders"),
         BotCommand(command="referral", description="Referral & rewards"),
@@ -368,7 +368,7 @@ async def set_user_commands(bot: Bot, user_id: int, *, verified: bool) -> None:
         BotCommand(command="ask", description="AI Helper"),
         BotCommand(command="community", description="Join Our Community ₹800/month"),
         BotCommand(command="ca", description="CA Tracker Pro ₹200/month"),
-    ] if verified else [BotCommand(command="start", description="Verify mobile & open LMS")]
+    ] if verified else [BotCommand(command="start", description="Join backup channel & start")]
     try:
         await bot.set_my_commands(cmds, scope=BotCommandScopeChat(chat_id=user_id))
     except Exception:

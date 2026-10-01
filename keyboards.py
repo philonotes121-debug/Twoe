@@ -152,6 +152,20 @@ def main_menu_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
+def home_kb() -> InlineKeyboardMarkup:
+    """Menu for users who joined the backup channel but are not LMS-approved yet."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔓 Unlock LMS (verify mobile)", callback_data="lms:open")],
+        [InlineKeyboardButton(text="👤 My Account", callback_data="account:open"),
+         InlineKeyboardButton(text="🎁 Referral", callback_data="referral:open")],
+        [InlineKeyboardButton(text="👥 Join Our Community ₹800/month", callback_data="plan:community")],
+        [InlineKeyboardButton(text="📰 CA TRACKER PRO ₹200/month", callback_data="plan:ca_tracker")],
+        [InlineKeyboardButton(text="🤖 AI Helper", callback_data="professor_ai:open"),
+         InlineKeyboardButton(text="💬 Support", callback_data="contact:open")],
+        [InlineKeyboardButton(text="📅 UPSC 2027 Countdown", callback_data="countdown:open")],
+    ])
+
+
 def miniapp_back_kb(path: str = "/webapp/lms", label: str = "📚 Open LMS") -> InlineKeyboardMarkup:
     if WEBAPP_BASE_URL:
         return InlineKeyboardMarkup(inline_keyboard=[
@@ -316,7 +330,7 @@ def admin_order_decision_kb(order_id: int) -> InlineKeyboardMarkup:
 
 def join_channel_kb(channel_username: str) -> InlineKeyboardMarkup:
     rows = [
-        [InlineKeyboardButton(text="📢 Join Backup Channel", url=f"https://t.me/{channel_username.lstrip('@')}")],
+        [InlineKeyboardButton(text="📢 Join Backup Channel", url=channel_username if str(channel_username).startswith("http") else f"https://t.me/{str(channel_username).lstrip('@')}")],
         [InlineKeyboardButton(text="✅ I've Joined — Continue", callback_data="checkjoin")],
     ]
     return InlineKeyboardMarkup(inline_keyboard=rows)
