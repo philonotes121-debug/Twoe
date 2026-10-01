@@ -1,4 +1,4 @@
-"""Admin command surface.
+"""Compact 29-command Admin surface.
 All commands are Admin-only and consolidate overlapping legacy handlers.
 Legacy handler modules remain available internally for callbacks/FSM flows, but are
 not exposed in the Admin bot command menu.
@@ -33,7 +33,7 @@ async def _reply(m: Message, title: str, lines: list[str], buttons=None):
 
 
 # ---------------------------------------------------------------------------
-# 1-39: ADMIN COMMAND SURFACE
+# 1-28: ADMIN COMMAND SURFACE
 # ---------------------------------------------------------------------------
 @router.message(Command("adminhelp"))
 async def adminhelp(m: Message):
@@ -67,17 +67,6 @@ async def adminhelp(m: Message):
         "26 /export • data exports",
         "27 /system • system status",
         "28 /lockdown • emergency controls",
-        "29 /addcourse • guided course creation",
-        "30 /quickadd • one-line course creation",
-        "31 /listsectionkeys • section keys",
-        "32 /grant • assign course access",
-        "33 /price • update course pricing",
-        "34 /listcourses • active courses",
-        "35 /listsections • LMS sections",
-        "36 /userinfo • user profile",
-        "37 /activity • user activity",
-        "38 /contacthistory • support history",
-        "39 /pending • pending orders",
     ])
 
 

@@ -28,7 +28,7 @@ See [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md) for setup details and optional integrat
 `/start` · `/menu` · `/trending` · `/account` · `/referral` · `/study` · `/support` · `/ask` · `/community` · `/ca`
 
 ## Admin commands
-`/adminhelp` · `/lms` · `/users` · `/orders` · `/content` · `/subscriptions` · `/promo` · `/broadcast` · `/schedule` · `/inbox` · `/groups` · `/referrals` · `/analytics` · `/ai` · `/presence` · `/security` · `/privacy` · `/health` · `/backup` · `/recovery` · `/moderation` · `/resources` · `/notion` · `/countdown` · `/settings` · `/audit` · `/export` · `/system` · `/lockdown` · `/addcourse` · `/quickadd` · `/listsectionkeys` · `/grant` · `/price` · `/listcourses` · `/listsections` · `/userinfo` · `/activity` · `/contacthistory` · `/pending`
+`/adminhelp` · `/lms` · `/users` · `/orders` · `/content` · `/subscriptions` · `/promo` · `/broadcast` · `/schedule` · `/inbox` · `/groups` · `/referrals` · `/analytics` · `/ai` · `/presence` · `/security` · `/privacy` · `/health` · `/backup` · `/recovery` · `/moderation` · `/resources` · `/notion` · `/countdown` · `/settings` · `/audit` · `/export` · `/system` · `/lockdown`
 
 ## Important
 - Course catalogue/cards are Mini App only; Trending is private-chat only.
@@ -40,7 +40,7 @@ See [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md) for setup details and optional integrat
 
 ## Release v2 notes
 
-- Admin surface: 40 commands; no User commands in Admin scope.
+- Admin surface: 29 commands; no User commands in Admin scope.
 - User surface: 10 verified commands; unverified users receive only `/start`.
 - LMS unlock: phone verification + global emergency gate.
 - CA Tracker: separate Notion-backed datasets and Mini App filters.
@@ -52,6 +52,7 @@ See [VERCEL_DEPLOY.md](VERCEL_DEPLOY.md) for setup details and optional integrat
 - Vercel uses the current Services configuration with `main:app` as the FastAPI entrypoint; the legacy `/api/index.py` rewrite shim and `functions` block are not used.
 - The FastAPI app remains the single `main:app` backend, so `/webhook`, `/api/*`, `/webapp/*` and `/` continue through the same application.
 - The included Vercel configuration is Hobby-safe and invokes `/api/cron` once daily at 19:30 IST. Minute-level background ticks require a Vercel plan that supports minutely Cron Jobs or a separate supported scheduler; the application code and protected `/api/cron` endpoint remain intact.
+- The nested prior release archive is preserved under `_archive_original/` and excluded from the Vercel function bundle.
 
 ## v3 production hardening
 The release also includes database-backed webhook idempotency, cron race protection, Admin/public command isolation, one-way phone fingerprinting for referral abuse control, membership expiry handling, persisted cron heartbeat, oversized-request protection and expanded Admin backups. See `PRODUCTION_GAP_AUDIT.md`.

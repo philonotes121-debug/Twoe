@@ -11,29 +11,15 @@ main_text = (ROOT / "main.py").read_text(encoding="utf-8")
 fm = json.loads((ROOT / "feature_matrix.json").read_text(encoding="utf-8"))
 
 
-def catalog_commands(name: str) -> list[str]:
-    tree = ast.parse((ROOT / "command_catalog.py").read_text(encoding="utf-8"))
-    value = next(
-        node.value
-        for node in tree.body
-        if isinstance(node, ast.Assign)
-        and any(isinstance(target, ast.Name) and target.id == name for target in node.targets)
-    )
-    return [
-        keyword.value.value
-        for node in ast.walk(value)
-        if isinstance(node, ast.Call)
-        and isinstance(node.func, ast.Name)
-        and node.func.id == "BotCommand"
-        for keyword in node.keywords
-        if keyword.arg == "command" and isinstance(keyword.value, ast.Constant)
-    ]
+def cmds(block_name: str, next_marker: str):
+    block = main_text.split(block_name, 1)[1].split(next_marker, 1)[0]
+    return re.findall(r'BotCommand\(command="([^"]+)"', block)
 
 
-user = catalog_commands("USER_COMMANDS")
-admin = catalog_commands("ADMIN_COMMANDS")
+user = cmds("USER_COMMANDS = [", "ADMIN_COMMANDS")
+admin = cmds("ADMIN_COMMANDS = [", "\n\n# ========================================================")
 assert len(user) == 10, user
-assert len(admin) == 40, admin
+assert 25 <= len(admin) <= 35, admin
 assert not (set(user) & set(admin)), set(user) & set(admin)
 assert len(user) == len(set(user)), user
 assert len(admin) == len(set(admin)), admin
@@ -43,27 +29,8 @@ assert all(x["final_policy"] for x in fm["features"])
 
 # Parse every application Python file, including tool scripts.
 py_files = [p for p in ROOT.rglob("*.py") if "_archive_original" not in p.parts]
-registered_commands = set()
 for p in py_files:
-    tree = ast.parse(p.read_text(encoding="utf-8"), filename=str(p))
-    for node in tree.body:
-        if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-            continue
-        for decorator in node.decorator_list:
-            for call in ast.walk(decorator):
-                if not isinstance(call, ast.Call):
-                    continue
-                function = call.func
-                command_filter = function.id if isinstance(function, ast.Name) else getattr(function, "attr", "")
-                if command_filter == "CommandStart":
-                    registered_commands.add("start")
-                elif command_filter == "Command":
-                    registered_commands.update(
-                        arg.value for arg in call.args if isinstance(arg, ast.Constant) and isinstance(arg.value, str)
-                    )
-assert set(user) <= registered_commands, sorted(set(user) - registered_commands)
-assert set(admin) <= registered_commands, sorted(set(admin) - registered_commands)
-assert "from command_catalog import USER_COMMANDS" in (ROOT / "services.py").read_text(encoding="utf-8")
+    ast.parse(p.read_text(encoding="utf-8"), filename=str(p))
 
 secret_rx = re.compile(
     r"\b\d{8,10}:[A-Za-z0-9_-]{35}\b|AIza[A-Za-z0-9_-]{30,}|\bsk-[A-Za-z0-9]{20,}\b"

@@ -12,7 +12,6 @@ from datetime import datetime, timedelta
 from typing import Optional
 
 from aiogram import Bot
-from command_catalog import USER_COMMANDS
 from aiogram.exceptions import TelegramBadRequest, TelegramRetryAfter
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from sqlalchemy import select, delete, func
@@ -358,7 +357,18 @@ async def count_users() -> int:
 async def set_user_commands(bot: Bot, user_id: int, *, verified: bool) -> None:
     """Show only a compact User menu; Admin gets a separate menu in main.py."""
     from aiogram.types import BotCommand, BotCommandScopeChat
-    cmds = list(USER_COMMANDS) if verified else [BotCommand(command="start", description="Verify mobile & open LMS")]
+    cmds = [
+        BotCommand(command="start", description="Verify & open LMS"),
+        BotCommand(command="menu", description="Open LMS"),
+        BotCommand(command="trending", description="Trending (private chat)"),
+        BotCommand(command="account", description="Account, access & orders"),
+        BotCommand(command="referral", description="Referral & rewards"),
+        BotCommand(command="study", description="Target, streak & reminders"),
+        BotCommand(command="support", description="Support & doubt"),
+        BotCommand(command="ask", description="AI Helper"),
+        BotCommand(command="community", description="Join Our Community ₹800/month"),
+        BotCommand(command="ca", description="CA Tracker Pro ₹200/month"),
+    ] if verified else [BotCommand(command="start", description="Verify mobile & open LMS")]
     try:
         await bot.set_my_commands(cmds, scope=BotCommandScopeChat(chat_id=user_id))
     except Exception:
