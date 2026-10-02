@@ -1,26 +1,30 @@
 {
   "version": 2,
-  "builds": [
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": {
+    "api/index.ts": {
+      "maxDuration": 60
+    }
+  },
+  "rewrites": [
     {
-      "src": "package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
+      "source": "/webhook",
+      "destination": "/api?__path=/webhook"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api?__path=/api/$1"
+    },
+    {
+      "source": "/webapp/(.*)",
+      "destination": "/api?__path=/webapp/$1"
     }
   ],
-  "routes": [
+  "crons": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/index.js"
-    },
-    {
-      "src": "/webapp/(.*)",
-      "dest": "/webapp/index.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
+      "path": "/api/cron",
+      "schedule": "0 2 * * *"
     }
   ]
 }

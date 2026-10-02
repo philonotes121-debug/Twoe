@@ -3,7 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';
 import { GoogleGenAI } from '@google/genai';
-import { timingSafeEqual } from 'node:crypto';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { SECTIONS } from './src/data/sections';
 import { COURSES } from './src/data/courses';
 import { CA_ARTICLES } from './src/data/caArticles';
@@ -29,15 +29,25 @@ app.use(express.urlencoded({ extended: true }));
 
 // Configuration from Environment
 const BOT_TOKEN = (process.env.BOT_TOKEN || "").trim();
-const TELEGRAM_WEBHOOK_SECRET = (process.env.TELEGRAM_WEBHOOK_SECRET || "").trim();
+const TELEGRAM_WEBHOOK_SECRET = (process.env.TELEGRAM_WEBHOOK_SECRET ||
+  (BOT_TOKEN ? createHash('sha256').update(`${BOT_TOKEN}:telegram-webhook`).digest('hex') : '')).trim();
 const ADMIN_ID = parseInt(process.env.ADMIN_ID || "0", 10);
 const BACKUP_CHANNEL = (process.env.BACKUP_CHANNEL || "").trim().replace(/^@/, '');
 const rawBaseUrl = (process.env.WEBAPP_BASE_URL || "").trim();
+const deploymentUrl = rawBaseUrl || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '');
 let WEBAPP_BASE_URL = (
-  rawBaseUrl && !rawBaseUrl.includes("YOUR-VERCEL-DOMAIN") && !rawBaseUrl.includes("example.com")
-    ? rawBaseUrl
+  deploymentUrl && !deploymentUrl.includes("YOUR-VERCEL-DOMAIN") && !deploymentUrl.includes("example.com")
+    ? deploymentUrl
     : "http://localhost:3000"
 ).replace(/\/$/, "");
+
+app.use((req, _res, next) => {
+  const requestedPath = req.query.__path;
+  if (typeof requestedPath === 'string' && requestedPath.startsWith('/')) {
+    req.url = requestedPath;
+  }
+  next();
+});
 
 // -------------------------------------------------------------
 // Multi-User Directory & Activity Tracker (Memory Store)
@@ -69,6 +79,12 @@ function escapeHtml(value: string): string {
     '"': '&quot;',
     "'": '&#39;'
   })[character] || character);
+}
+
+function deletionStatus(): string {
+  return process.env.VERCEL === '1'
+    ? 'Auto-delete needs a persistent queue and is unavailable in this deployment.'
+    : 'Message deletion is scheduled for 10 hours while this process stays running.';
 }
 
 function getOrCreateAspirant(fromUser: any): AspirantRecord {
@@ -197,9 +213,11 @@ async function sendTimedMessage(chatId: number, text: string, pin = false): Prom
     });
   }
 
-  setTimeout(() => {
-    tgApi('deleteMessage', { chat_id: chatId, message_id: messageId }).catch(() => {});
-  }, scheduledDeletionMs);
+  if (process.env.VERCEL !== '1') {
+    setTimeout(() => {
+      tgApi('deleteMessage', { chat_id: chatId, message_id: messageId }).catch(() => {});
+    }, scheduledDeletionMs);
+  }
   return true;
 }
 
@@ -711,7 +729,7 @@ async function handleTelegramMessage(message: any) {
     const result = await broadcastPersonalMessage(`📢 ${content.slice(0, 3500)}`, true);
     return tgApi('sendMessage', {
       chat_id: chatId,
-      text: `Broadcast sent to ${result.sent} known chats; ${result.failed} failed. Groups are pinned when allowed; messages are scheduled for deletion after 10 hours while the process runs.`
+      text: `Broadcast sent to ${result.sent} known chats; ${result.failed} failed. Groups are pinned when allowed. ${deletionStatus()}`
     });
   }
 
@@ -737,7 +755,7 @@ async function handleTelegramMessage(message: any) {
     const result = await broadcastPersonalMessage(`📣 ${content.slice(0, 3500)}`, true);
     return tgApi('sendMessage', {
       chat_id: chatId,
-      text: `Promo message sent to ${result.sent} known chats; ${result.failed} failed. Groups are pinned when allowed and messages are scheduled for deletion after 10 hours while the process runs.`
+      text: `Promo message sent to ${result.sent} known chats; ${result.failed} failed. Groups are pinned when allowed. ${deletionStatus()}`
     });
   }
 
@@ -974,7 +992,7 @@ async function handleTelegramMessage(message: any) {
       const result = await broadcastCountdown();
       return tgApi('sendMessage', {
         chat_id: chatId,
-        text: `⏳ Countdown sent to ${result.sent} chats; ${result.failed} failed. Group messages are pinned when bot permissions allow and deleted after 10 hours while the process is running.`
+        text: `⏳ Countdown sent to ${result.sent} chats; ${result.failed} failed. Groups are pinned when allowed. ${deletionStatus()}`
       });
     }
 
@@ -1081,7 +1099,7 @@ async function handleTelegramMessage(message: any) {
       const result = await broadcastPersonalMessage(message, true);
       return tgApi('sendMessage', {
         chat_id: chatId,
-        text: `🌅 Sent to ${result.sent} known chats; ${result.failed} failed. Group messages are pinned when allowed; messages are scheduled for deletion after 10 hours while the process runs.`
+        text: `🌅 Sent to ${result.sent} known chats; ${result.failed} failed. Groups are pinned when allowed. ${deletionStatus()}`
       });
     }
 
@@ -1090,7 +1108,7 @@ async function handleTelegramMessage(message: any) {
       const result = await broadcastPersonalMessage(message, true);
       return tgApi('sendMessage', {
         chat_id: chatId,
-        text: `🌙 Sent to ${result.sent} known chats; ${result.failed} failed. Group messages are pinned when allowed; messages are scheduled for deletion after 10 hours while the process runs.`
+        text: `🌙 Sent to ${result.sent} known chats; ${result.failed} failed. Groups are pinned when allowed. ${deletionStatus()}`
       });
     }
 
@@ -1453,6 +1471,8 @@ async function startPollingLoop() {
   }
 }
 
+// Auto-heal and interval schedulers require a persistent local process.
+if (process.env.VERCEL !== '1') {
 // Auto-Heal Watchdog (Checks every 25 seconds)
 setInterval(async () => {
   if (!BOT_TOKEN) return;
@@ -1521,6 +1541,7 @@ process.on('uncaughtException', (err) => {
 process.on('unhandledRejection', (reason) => {
   console.error("[Auto-Heal Safe Catch unhandledRejection]:", reason);
 });
+}
 
 // -------------------------------------------------------------
 // Telegram Bot Bootstrap & Scope-Based Command Registration
@@ -1621,6 +1642,15 @@ async function initTelegramBot() {
       console.warn("[Telegram Bot] Menu button notice:", err);
     }
 
+    if (process.env.VERCEL === '1') {
+      await tgApi('setWebhook', {
+        url: `${WEBAPP_BASE_URL}/webhook`,
+        secret_token: TELEGRAM_WEBHOOK_SECRET,
+        allowed_updates: ['message', 'callback_query']
+      });
+      return;
+    }
+
     // Clear any obsolete webhook from previous configs
     const whInfo = await tgApi('getWebhookInfo');
     if (whInfo?.result?.url && (whInfo.result.url.includes("YOUR-VERCEL-DOMAIN") || whInfo.result.url.includes("vercel.app") || !process.env.USE_WEBHOOK)) {
@@ -1645,23 +1675,26 @@ app.get('/api/health', (_req: Request, res: Response) => {
   });
 });
 
-app.get('/api/cron', (req: Request, res: Response) => {
+app.get('/api/cron', async (req: Request, res: Response) => {
   const cronSecret = process.env.CRON_SECRET;
   if (!cronSecret || req.header('authorization') !== `Bearer ${cronSecret}`) {
     return res.status(401).json({ error: "Unauthorized" });
   }
+  if (!BOT_TOKEN) {
+    return res.status(503).json({ error: "Telegram bot is not configured." });
+  }
 
   userState.cronLastHeartbeat = new Date().toISOString();
+  const countdown = await broadcastCountdown();
+  const morningMessage = await generateDailyBroadcast('morning');
+  const morning = await broadcastPersonalMessage(morningMessage, true);
+  await notifyAdmin(`Cron broadcast results: countdown ${countdown.sent} sent/${countdown.failed} failed; morning ${morning.sent} sent/${morning.failed} failed.`);
   res.json({
     ok: true,
-    message: "Cron tick processed successfully",
+    message: "Daily countdown and morning broadcasts processed.",
     timestamp: userState.cronLastHeartbeat,
-    tasks_run: [
-      "scheduled_deletions_cleanup",
-      "referral_audit_verification",
-      "routine_motivation_broadcast",
-      "exam_countdown_sync"
-    ]
+    countdown,
+    morning
   });
 });
 
@@ -2023,11 +2056,15 @@ app.post('/webhook', async (req: Request, res: Response) => {
 
   const update = req.body;
   updatesProcessedCount += 1;
-
-  if (update?.message) {
-    handleTelegramMessage(update.message).catch(err => console.error("Error handling webhook message:", err));
-  } else if (update?.callback_query) {
-    handleTelegramCallback(update.callback_query).catch(err => console.error("Error handling webhook callback:", err));
+  try {
+    if (update?.message) {
+      await handleTelegramMessage(update.message);
+    } else if (update?.callback_query) {
+      await handleTelegramCallback(update.callback_query);
+    }
+  } catch (error) {
+    console.error("Error handling Telegram webhook update:", error);
+    return res.status(500).json({ error: "Update processing failed" });
   }
 
   res.json({ ok: true, received: true, update_id: update?.update_id });
@@ -2083,6 +2120,14 @@ async function startServer() {
   });
 }
 
-startServer().catch(err => {
-  console.error("Failed to start server:", err);
-});
+export { app };
+
+export async function initializeTelegramBot() {
+  await initTelegramBot();
+}
+
+if (process.env.VERCEL !== '1') {
+  startServer().catch(err => {
+    console.error("Failed to start server:", err);
+  });
+}
