@@ -1,0 +1,89 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Aspirant user profile with coins, phone verification and study streak",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 256 },
+        "displayName": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "enum": ["student", "admin"] },
+        "phone": { "type": "string", "maxLength": 32 },
+        "coins": { "type": "number" },
+        "streak": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "email", "role"]
+    },
+    "StudyPlan": {
+      "title": "StudyPlan",
+      "description": "Daily UPSC study timetable slots and Google Calendar sync tasks",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 256 },
+        "description": { "type": "string", "maxLength": 2048 },
+        "subject": { "type": "string", "maxLength": 64 },
+        "date": { "type": "string", "maxLength": 32 },
+        "startTime": { "type": "string", "maxLength": 16 },
+        "endTime": { "type": "string", "maxLength": 16 },
+        "isSyncedToGoogle": { "type": "boolean" },
+        "googleEventId": { "type": "string", "maxLength": 128 },
+        "completed": { "type": "boolean" },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "title", "date"]
+    },
+    "MainsEvaluation": {
+      "title": "MainsEvaluation",
+      "description": "UPSC Mains answer evaluation submissions and AI scoring",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "question": { "type": "string", "maxLength": 1024 },
+        "answer": { "type": "string", "maxLength": 10000 },
+        "feedback": { "type": "string", "maxLength": 10000 },
+        "score": { "type": "number" },
+        "createdAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "answer", "feedback"]
+    },
+    "CourseEnrollment": {
+      "title": "CourseEnrollment",
+      "description": "Record of course enrollments and batch access",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "userId": { "type": "string", "maxLength": 128 },
+        "courseId": { "type": "number" },
+        "courseName": { "type": "string", "maxLength": 256 },
+        "batchId": { "type": "string", "maxLength": 64 },
+        "enrolledAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["id", "userId", "courseId", "courseName"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "User profile records indexed by auth UID"
+    },
+    "/study_plans/{planId}": {
+      "schema": "StudyPlan",
+      "description": "Study schedule items and Google Calendar synchronization items"
+    },
+    "/evaluations/{evalId}": {
+      "schema": "MainsEvaluation",
+      "description": "Evaluated UPSC answers for aspirants"
+    },
+    "/enrollments/{enrollmentId}": {
+      "schema": "CourseEnrollment",
+      "description": "Aspirant course enrollment records"
+    }
+  }
+}

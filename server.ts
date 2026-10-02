@@ -33,10 +33,10 @@ const BOT_TOKEN = (process.env.BOT_TOKEN || "").trim();
 const ADMIN_ID = parseInt(process.env.ADMIN_ID || "7209486623", 10);
 const BACKUP_CHANNEL = (process.env.BACKUP_CHANNEL || "@upsc_course_backup").trim().replace(/^@/, '');
 const rawBaseUrl = (process.env.WEBAPP_BASE_URL || "").trim();
-const WEBAPP_BASE_URL = (
+let WEBAPP_BASE_URL = (
   rawBaseUrl && !rawBaseUrl.includes("YOUR-VERCEL-DOMAIN") && !rawBaseUrl.includes("example.com")
     ? rawBaseUrl
-    : "https://ais-dev-2w4vncmko2fiwls5psbjos-513814413634.asia-east1.run.app"
+    : "https://ais-pre-2w4vncmko2fiwls5psbjos-513814413634.asia-east1.run.app"
 ).replace(/\/$/, "");
 
 // -------------------------------------------------------------
@@ -295,7 +295,7 @@ async function handleTelegramMessage(message: any) {
       text: `✅ <b>Mobile Number Verified:</b> <code>${phone}</code>\n\n🎉 <b>Full LMS Access Unlocked!</b>\n• 50 Bonus Coins credited to your wallet\n• Zero login barrier in LMS Mini App\n• Tap below to access all 233+ batches & video handouts:`,
       reply_markup: {
         inline_keyboard: [
-          [{ text: "📚 Launch LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }],
+          [{ text: "📚 Launch LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }],
           [{ text: "📋 Course Menu", callback_data: "menu:main" }]
         ]
       }
@@ -355,7 +355,7 @@ async function handleTelegramMessage(message: any) {
           reply_markup: {
             inline_keyboard: [
               [{ text: "✅ Confirm & Unlock Course", callback_data: `confirm_buy:${course.id}` }],
-              [{ text: "📚 Open in LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }]
+              [{ text: "📚 Open in LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }]
             ]
           }
         });
@@ -368,7 +368,7 @@ async function handleTelegramMessage(message: any) {
         text: `🎉 <b>Welcome to UPSC Course Zone!</b>\n\nInvited via referral code: <code>${param.replace('ref_', '')}</code>.\n<b>50 bonus coins</b> credited to your wallet!\n\nNo login required. Tap below to begin:`,
         reply_markup: {
           inline_keyboard: [
-            [{ text: "📚 Open LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }],
+            [{ text: "📚 Open LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }],
             [{ text: "📋 Course Menu", callback_data: "menu:main" }]
           ]
         }
@@ -384,12 +384,14 @@ async function handleTelegramMessage(message: any) {
 👨‍🏫 <b>Institutes</b>: Next IAS, Vision, Forum, Mrunal, Vajiram, PW
 📰 <b>CA Tracker Pro</b>: The Hindu, Indian Express, PIB Daily
 ✍️ <b>Mains Evaluator</b>: Instant Rubric Scoring /10
+📅 <b>Study Calendar</b>: Google Calendar Sync Active
 
 ⚡ <i>Zero login friction — instant 1-tap access below:</i>`;
 
     const userKeyboard: any[] = [
-      [{ text: "📚 Open LMS Portal (233+ Batches)", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }],
-      [{ text: "📰 Daily CA Tracker Pro", web_app: { url: `${WEBAPP_BASE_URL}/webapp/ca` } }, { text: "✍️ Mains Answer Evaluator", web_app: { url: `${WEBAPP_BASE_URL}/webapp/community` } }],
+      [{ text: "📚 Open LMS Portal (233+ Batches)", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }],
+      [{ text: "📰 Daily CA Tracker Pro", web_app: { url: `${WEBAPP_BASE_URL}/?tab=ca` } }, { text: "✍️ Mains Answer Evaluator", web_app: { url: `${WEBAPP_BASE_URL}/?tab=community` } }],
+      [{ text: "📅 Study Calendar (Google Sync)", web_app: { url: `${WEBAPP_BASE_URL}/?tab=calendar` } }],
       [{ text: "📋 Course Tracks & Pricing", callback_data: "menu:main" }, { text: "👤 Aspirant Account", callback_data: "account" }],
       [{ text: "📱 Verify Mobile (1-Tap)", callback_data: "quick_verify" }]
     ];
@@ -418,7 +420,7 @@ async function handleTelegramMessage(message: any) {
       text: `📚 <b>UPSC Course Zone — Course Tracks</b>\n\nSelect a track to inspect batches or open full LMS:`,
       reply_markup: {
         inline_keyboard: [
-          [{ text: "📚 Open Full LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }],
+          [{ text: "📚 Open Full LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }],
           [{ text: "🏛 GS Foundation", callback_data: "cat:upsc_foundation" }, { text: "📗 Optional Subjects", callback_data: "cat:upsc_optional" }],
           [{ text: "📝 Prelims & Mains Test Series", callback_data: "cat:test_series" }, { text: "🏢 State PSC", callback_data: "cat:state_psc" }],
           [{ text: "🎁 Combo Deals", callback_data: "cat:combo" }, { text: "🔥 Trending Batches", callback_data: "trending" }]
@@ -434,7 +436,7 @@ async function handleTelegramMessage(message: any) {
       text: `🔥 <b>Trending UPSC Batches This Week</b>\n\n1. <b>Mrunal Sir Economy PCB 15/16</b> — ₹300 (CSE-218)\n2. <b>Forum IAS GS Foundation 2027</b> — ₹1200 (CSE-152)\n3. <b>Vision IAS History Optional 2027</b> — ₹800 (CSE-069)\n4. <b>Atish Mathur Magna Carta Polity</b> — ₹500 (CSE-158)\n5. <b>Sudarshan Gujjar Environment 2026</b> — ₹200 (CSE-206)\n\nAll courses include complete handouts, test series, and lifetime Telegram channel access.`,
       reply_markup: {
         inline_keyboard: [
-          [{ text: "📚 View In Mini App", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }]
+          [{ text: "📚 View In Mini App", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }]
         ]
       }
     });
@@ -449,7 +451,7 @@ async function handleTelegramMessage(message: any) {
       reply_markup: {
         inline_keyboard: [
           [{ text: "📱 1-Tap Verify Mobile", callback_data: "quick_verify" }, { text: "🎁 Referral Link", callback_data: "referral" }],
-          [{ text: "📚 Open LMS Portal", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }]
+          [{ text: "📚 Open LMS Portal", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }]
         ]
       }
     });
@@ -476,7 +478,8 @@ async function handleTelegramMessage(message: any) {
       text: `🎯 <b>Study Tracker & Exam Goal</b>\n\n• Target Exam: <b>UPSC Prelims 2027 (23 May 2027)</b>\n• Current Streak: <b>15 consecutive days</b> 🔥\n• Recommended Study Pace: 8 hrs/day\n\nTip: You can submit your GS answer for AI evaluation inside the Community Dashboard!`,
       reply_markup: {
         inline_keyboard: [
-          [{ text: "✍️ Evaluate GS Answer", web_app: { url: `${WEBAPP_BASE_URL}/webapp/community` } }]
+          [{ text: "✍️ Evaluate GS Answer", web_app: { url: `${WEBAPP_BASE_URL}/?tab=community` } }],
+          [{ text: "📅 Study Calendar", web_app: { url: `${WEBAPP_BASE_URL}/?tab=calendar` } }]
         ]
       }
     });
@@ -513,7 +516,7 @@ async function handleTelegramMessage(message: any) {
       text: `👨‍🏫 <b>Professor Mentor Response:</b>\n\n${answerText.slice(0, 3800)}`,
       reply_markup: {
         inline_keyboard: [
-          [{ text: "✍️ Write & Evaluate Answer", web_app: { url: `${WEBAPP_BASE_URL}/webapp/community` } }]
+          [{ text: "✍️ Write & Evaluate Answer", web_app: { url: `${WEBAPP_BASE_URL}/?tab=community` } }]
         ]
       }
     });
@@ -526,7 +529,7 @@ async function handleTelegramMessage(message: any) {
       text: `👥 <b>Join Our UPSC Community (₹800/month)</b>\n\n• All 230+ UPSC courses included\n• Daily Personal AI Progress Tracking\n• Unlimited UPSC Mains Answer Evaluation\n• Mentorship & Doubt Clearing Sessions\n\nLaunch dashboard:`,
       reply_markup: {
         inline_keyboard: [
-          [{ text: "🚀 Open Community Dashboard", web_app: { url: `${WEBAPP_BASE_URL}/webapp/community` } }]
+          [{ text: "🚀 Open Community Dashboard", web_app: { url: `${WEBAPP_BASE_URL}/?tab=community` } }]
         ]
       }
     });
@@ -539,7 +542,7 @@ async function handleTelegramMessage(message: any) {
       text: `📰 <b>CA Tracker Pro (₹200/month)</b>\n\n• The Hindu & Indian Express Curated Editorials\n• PIB Daily Summaries\n• Places in News with Geographic Context\n• International Organisations & Treaties\n• Full Notion Database Sync & Font Zoom Control\n\nLaunch CA Tracker Pro:`,
       reply_markup: {
         inline_keyboard: [
-          [{ text: "📰 Launch CA Tracker Pro", web_app: { url: `${WEBAPP_BASE_URL}/webapp/ca` } }]
+          [{ text: "📰 Launch CA Tracker Pro", web_app: { url: `${WEBAPP_BASE_URL}/?tab=ca` } }]
         ]
       }
     });
@@ -557,7 +560,7 @@ async function handleTelegramMessage(message: any) {
         reply_markup: {
           inline_keyboard: [
             [{ text: "📊 Platform Analytics", callback_data: "admin:analytics" }, { text: "📋 Extract User Dossier", callback_data: "admin:extract" }],
-            [{ text: "⭐ Launch LMS (VIP All-Access)", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }]
+            [{ text: "⭐ Launch LMS (VIP All-Access)", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }]
           ]
         }
       });
@@ -1349,6 +1352,20 @@ async function initTelegramBot() {
       console.log(`[Telegram Bot] Registered all 40 Admin commands for Admin ID ${ADMIN_ID}`);
     }
 
+    // Register WebApp Chat Menu Button (No Google login prompt)
+    try {
+      await tgApi('setChatMenuButton', {
+        menu_button: {
+          type: 'web_app',
+          text: '📚 Open LMS',
+          web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` }
+        }
+      });
+      console.log(`[Telegram Bot] Set chat menu button to ${WEBAPP_BASE_URL}/?tab=lms`);
+    } catch (err) {
+      console.warn("[Telegram Bot] Menu button notice:", err);
+    }
+
     // Clear any obsolete webhook from previous configs
     const whInfo = await tgApi('getWebhookInfo');
     if (whInfo?.result?.url && (whInfo.result.url.includes("YOUR-VERCEL-DOMAIN") || whInfo.result.url.includes("vercel.app") || !process.env.USE_WEBHOOK)) {
@@ -1366,7 +1383,7 @@ async function initTelegramBot() {
 // -------------------------------------------------------------
 // Health, Status & Cron Endpoints
 // -------------------------------------------------------------
-app.get(['/', '/api/health'], (_req: Request, res: Response) => {
+app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: "ok",
     database: "ok",
@@ -1427,6 +1444,26 @@ app.post('/api/bot/reconnect', async (_req: Request, res: Response) => {
     polling_active: botPollingActive,
     updates_processed: updatesProcessedCount
   });
+});
+
+app.post('/api/admin/set-base-url', async (req: Request, res: Response) => {
+  const url = String(req.body.url || "").trim().replace(/\/$/, "");
+  if (!url || !url.startsWith("http")) {
+    return res.status(400).json({ error: "Invalid URL provided. Must start with http:// or https://" });
+  }
+  WEBAPP_BASE_URL = url;
+  if (BOT_TOKEN) {
+    try {
+      await tgApi('setChatMenuButton', {
+        menu_button: {
+          type: 'web_app',
+          text: '📚 Open LMS',
+          web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` }
+        }
+      });
+    } catch {}
+  }
+  res.json({ ok: true, webapp_base_url: WEBAPP_BASE_URL });
 });
 
 // Mobile verification endpoint (Zero login barrier)
@@ -1799,364 +1836,26 @@ app.post('/webhook', async (req: Request, res: Response) => {
 });
 
 // -------------------------------------------------------------
-// HTML Shell Endpoints for Telegram WebApp (Zero-Login Barrier)
+// Telegram WebApp Route Handlers (Route to Rich React SPA)
 // -------------------------------------------------------------
-function renderShell(title: string, subtitle: string, bodyContent: string) {
-  return `<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-  <title>${title}</title>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <style>
-    :root {
-      --bg: #0f172a;
-      --card: #1e293b;
-      --text: #f8fafc;
-      --hint: #94a3b8;
-      --accent: #0284c7;
-      --accent-hover: #0369a1;
-      --border: #334155;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      padding: 16px;
-    }
-    header {
-      position: sticky;
-      top: 0;
-      background: var(--bg);
-      padding: 8px 0 14px;
-      z-index: 10;
-      border-bottom: 1px solid var(--border);
-    }
-    h1 { font-size: 20px; font-weight: 700; margin: 0 0 4px 0; color: #fff; }
-    .sub { color: var(--hint); font-size: 13px; }
-    .countdown { font-size: 12px; color: #38bdf8; font-weight: 600; margin-top: 6px; }
-    .vip-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: #064e3b;
-      color: #34d399;
-      border: 1px solid #059669;
-      padding: 6px 12px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 600;
-      margin-top: 8px;
-    }
-    .verify-bar {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 14px;
-      padding: 12px;
-      margin: 12px 0;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 10px;
-    }
-    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0; }
-    input, select, button { font: inherit; }
-    input, select {
-      padding: 10px 14px;
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      background: var(--card);
-      color: var(--text);
-      outline: none;
-    }
-    button {
-      border: 0;
-      border-radius: 12px;
-      padding: 10px 16px;
-      background: var(--accent);
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-    }
-    button.secondary {
-      background: var(--card);
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .grid { display: grid; gap: 12px; margin-top: 14px; }
-    .card {
-      background: var(--card);
-      border-radius: 16px;
-      padding: 16px;
-      border: 1px solid var(--border);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    .card-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-    .card-meta { font-size: 12.5px; color: var(--hint); line-height: 1.5; }
-    .card-footer {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 12px;
-      padding-top: 10px;
-      border-top: 1px solid #334155;
-    }
-    .price { font-weight: 700; color: #38bdf8; font-size: 15px; }
-    .tag {
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 6px;
-      background: #0369a1;
-      color: #e0f2fe;
-    }
-    .empty { padding: 40px 10px; text-align: center; color: var(--hint); }
-  </style>
-</head>
-<body>
-  <header>
-    <h1>${title}</h1>
-    <div class="sub">${subtitle}</div>
-    <div id="liveCountdown" class="countdown">⏳ UPSC Prelims 2027: Calculating...</div>
-    <div class="vip-badge">⭐ Zero Login Barrier • 1-Click Access Active</div>
-  </header>
-  ${bodyContent}
-  <script>
-    const tg = window.Telegram?.WebApp;
-    if (tg) {
-      tg.ready();
-      tg.expand();
-    }
-    const examDate = '2027-05-23';
-    function tick() {
-      const diff = new Date(examDate + 'T00:00:00+05:30').getTime() - Date.now();
-      const el = document.getElementById('liveCountdown');
-      if (el) {
-        if (diff > 0) {
-          const days = Math.floor(diff / 86400000);
-          const hours = Math.floor((diff % 86400000) / 3600000);
-          const mins = Math.floor((diff % 3600000) / 60000);
-          const secs = Math.floor((diff % 60000) / 1000);
-          el.textContent = '⏳ UPSC Prelims 2027: ' + days + 'd ' + hours + 'h ' + mins + 'm ' + secs + 's';
-        } else {
-          el.textContent = 'Exam Day!';
-        }
-      }
-    }
-    setInterval(tick, 1000);
-    tick();
-
-    async function api(path, opt = {}) {
-      opt.headers = { ...(opt.headers || {}), 'Content-Type': 'application/json' };
-      return fetch(path, opt);
-    }
-  </script>
-</body>
-</html>`;
-}
-
 app.get('/webapp/lms', (_req: Request, res: Response) => {
-  const body = `
-  <div class="verify-bar" id="verifyBox">
-    <div>
-      <div style="font-weight: 600; font-size: 13px;">📱 Mobile Number Verification (No Login Needed)</div>
-      <div style="font-size: 11.5px; color: var(--hint);">Verify to unlock video streaming & earn 50 bonus coins.</div>
-    </div>
-    <div style="display: flex; gap: 6px;">
-      <input id="phoneInput" placeholder="+91 9876543210" style="padding: 7px 10px; font-size: 12px; width: 140px;" />
-      <button onclick="verifyPhone()" style="padding: 7px 12px; font-size: 12px;">Verify</button>
-    </div>
-  </div>
-
-  <div class="toolbar">
-    <input id="q" placeholder="Search courses or faculty..." style="flex: 1;" />
-    <select id="sectionFilter">
-      <option value="all">All Sections</option>
-    </select>
-  </div>
-  <div id="courseList" class="grid"></div>
-  <div id="emptyMessage" class="empty" style="display: none;">No courses found.</div>
-
-  <script>
-    let courses = [];
-    async function init() {
-      const [secRes, crsRes] = await Promise.all([
-        api('/api/lms/sections'),
-        api('/api/courses?section_key=all')
-      ]);
-      const secData = await secRes.json();
-      const crsData = await crsRes.json();
-      courses = crsData;
-
-      const sel = document.getElementById('sectionFilter');
-      secData.forEach(s => {
-        const opt = document.createElement('option');
-        opt.value = s.key;
-        opt.textContent = s.name;
-        sel.appendChild(opt);
-      });
-
-      renderCourses();
-
-      document.getElementById('q').addEventListener('input', renderCourses);
-      sel.addEventListener('change', async () => {
-        const val = sel.value;
-        const res = await api('/api/courses?section_key=' + encodeURIComponent(val));
-        courses = await res.json();
-        renderCourses();
-      });
-    }
-
-    function renderCourses() {
-      const q = document.getElementById('q').value.toLowerCase().trim();
-      const list = document.getElementById('courseList');
-      const empty = document.getElementById('emptyMessage');
-      list.innerHTML = '';
-
-      const filtered = courses.filter(c => 
-        !q || c.name.toLowerCase().includes(q) || (c.faculty || '').toLowerCase().includes(q)
-      );
-
-      if (!filtered.length) {
-        empty.style.display = 'block';
-        return;
-      }
-      empty.style.display = 'none';
-
-      filtered.forEach(c => {
-        const el = document.createElement('div');
-        el.className = 'card';
-        el.innerHTML = \`
-          <div class="card-title">\${c.name}</div>
-          <div class="card-meta">👨‍🏫 \${c.faculty || 'Expert Faculty'} • 🌐 \${c.medium} • Batch #\${c.batch_id}</div>
-          <div class="card-meta" style="margin-top: 4px;">📝 \${c.notes}</div>
-          <div class="card-footer">
-            <span class="price">₹\${c.price}</span>
-            <button onclick="enroll(\${c.id})">Enroll Now</button>
-          </div>
-        \`;
-        list.appendChild(el);
-      });
-    }
-
-    async function enroll(id) {
-      const res = await api('/api/course-link/' + id);
-      const data = await res.json();
-      if (data.url && window.Telegram?.WebApp) {
-        window.Telegram.WebApp.openTelegramLink(data.url);
-      } else {
-        alert('Enrolled in batch: ' + (data.batch_id || id) + '\\nAccess token activated!');
-      }
-    }
-
-    async function verifyPhone() {
-      const p = document.getElementById('phoneInput').value;
-      if (!p) return;
-      const res = await api('/api/user/verify-mobile', {
-        method: 'POST',
-        body: JSON.stringify({ phone: p })
-      });
-      const data = await res.json();
-      if (data.ok) {
-        document.getElementById('verifyBox').innerHTML = '<div style="color: #34d399; font-weight: 600; font-size: 13px;">✅ Mobile Verified: ' + p + ' • 50 Bonus Coins Added!</div>';
-      }
-    }
-
-    init();
-  </script>
-  `;
-  res.send(renderShell("📚 UPSC Course Zone", "Course Catalog & Direct LMS Access (No Login)", body));
+  res.redirect('/?tab=lms');
 });
 
 app.get('/webapp/ca', (_req: Request, res: Response) => {
-  const body = `
-  <div class="toolbar">
-    <button onclick="loadDataset('daily')">Daily CA</button>
-    <button class="secondary" onclick="loadDataset('editorial')">Editorial</button>
-    <button class="secondary" onclick="loadDataset('place_news')">Place in News</button>
-    <button class="secondary" onclick="loadDataset('international')">International Orgs</button>
-  </div>
-  <div class="toolbar">
-    <input id="searchCa" placeholder="Search current affairs..." style="flex: 1;" />
-    <button onclick="refreshCa()">Search</button>
-  </div>
-  <div id="articlesList" class="grid"></div>
-  <script>
-    let currentDataset = 'daily';
-    async function loadDataset(ds) {
-      currentDataset = ds;
-      const res = await api('/api/ca/dataset/' + ds);
-      const data = await res.json();
-      renderArticles(data);
-    }
-    function renderArticles(items) {
-      const list = document.getElementById('articlesList');
-      list.innerHTML = '';
-      items.forEach(a => {
-        const el = document.createElement('div');
-        el.className = 'card';
-        el.innerHTML = \`
-          <div class="card-title">\${a.title}</div>
-          <div class="card-meta">📰 \${a.source} • 📅 \${a.date} • 🏷️ \${a.topic}</div>
-          <p style="font-size: 13.5px; line-height: 1.55; margin: 10px 0 6px 0;">\${a.summary}</p>
-          \${a.location ? '<div class="tag">📍 ' + a.location + '</div>' : ''}
-          \${a.organisation ? '<div class="tag" style="margin-left: 6px;">🏛 ' + a.organisation + '</div>' : ''}
-        \`;
-        list.appendChild(el);
-      });
-    }
-    async function refreshCa() {
-      const q = document.getElementById('searchCa').value;
-      const res = await api('/api/ca/items?q=' + encodeURIComponent(q));
-      const data = await res.json();
-      renderArticles(data);
-    }
-    loadDataset('daily');
-  </script>
-  `;
-  res.send(renderShell("📰 CA Tracker Pro by Professor 🥼", "The Hindu • Indian Express • PIB Daily • Editorials", body));
+  res.redirect('/?tab=ca');
 });
 
 app.get('/webapp/community', (_req: Request, res: Response) => {
-  const body = `
-  <div class="card" style="margin-bottom: 14px;">
-    <div class="card-title">👥 UPSC Aspirants Community</div>
-    <div class="card-meta">Active VIP Access • Personal AI Tracking • Mains Answer Evaluator</div>
-  </div>
-  <div class="card">
-    <div class="card-title">✍️ UPSC Mains Answer Evaluation</div>
-    <div class="card-meta" style="margin-bottom: 10px;">Paste your GS answer for instant multi-criteria evaluation (Score, Strengths, Improvements).</div>
-    <textarea id="answerText" rows="6" placeholder="Paste your GS-1, GS-2, GS-3 or GS-4 answer here..." style="width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 12px; background: var(--bg); color: var(--text); font-family: inherit; font-size: 13.5px;"></textarea>
-    <button onclick="evaluateAnswer()" style="margin-top: 10px;">Evaluate Answer</button>
-    <div id="evaluationResult" style="margin-top: 14px; white-space: pre-wrap; font-size: 13.5px; line-height: 1.6;"></div>
-  </div>
-  <script>
-    async function evaluateAnswer() {
-      const text = document.getElementById('answerText').value;
-      const out = document.getElementById('evaluationResult');
-      if (!text.trim()) {
-        alert('Please paste an answer first.');
-        return;
-      }
-      out.innerHTML = '<i>⏳ Evaluating with Professor AI...</i>';
-      const res = await api('/api/community/evaluate', {
-        method: 'POST',
-        body: JSON.stringify({ answer: text })
-      });
-      const data = await res.json();
-      out.innerHTML = data.feedback || data.error || 'Evaluation completed.';
-    }
-  </script>
-  `;
-  res.send(renderShell("👥 Join Our Community", "Private Member Dashboard & Answer Evaluation", body));
+  res.redirect('/?tab=community');
 });
 
-app.get('/webapp/section/:section_key', (_req: Request, res: Response) => {
-  res.redirect('/webapp/lms');
+app.get('/webapp/calendar', (_req: Request, res: Response) => {
+  res.redirect('/?tab=calendar');
+});
+
+app.get('/webapp/section/:section_key', (req: Request, res: Response) => {
+  res.redirect(`/?tab=lms&section=${encodeURIComponent(req.params.section_key)}`);
 });
 
 // -------------------------------------------------------------

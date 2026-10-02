@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
   BookOpen,
   Newspaper,
+  Calendar,
   Users,
   Bot,
   ShieldCheck,
@@ -26,9 +27,10 @@ import {
 import { SECTIONS, SectionItem } from './data/sections';
 import { COURSES, CourseItem } from './data/courses';
 import { CA_ARTICLES, CaArticle } from './data/caArticles';
+import CalendarPlanner from './components/CalendarPlanner';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState<'lms' | 'ca' | 'community' | 'bot' | 'admin'>('lms');
+  const [activeTab, setActiveTab] = useState<'lms' | 'ca' | 'calendar' | 'community' | 'bot' | 'admin'>('lms');
 
   // Exam Countdown
   const [countdown, setCountdown] = useState({ days: 0, hours: 0, mins: 0, secs: 0 });
@@ -63,6 +65,23 @@ export default function App() {
   const [caDataset, setCaDataset] = useState<'all' | 'daily' | 'editorial' | 'place_news' | 'international'>('all');
   const [caSearch, setCaSearch] = useState('');
   const [caZoom, setCaZoom] = useState(100);
+  const [selectedArticle, setSelectedArticle] = useState<CaArticle | null>(null);
+
+  // Sample UPSC Questions for 1-Click Evaluation
+  const SAMPLE_QUESTIONS = [
+    {
+      title: "GS-2: Election Commission",
+      sampleText: "Q: Evaluate the role of the Election Commission of India in ensuring free and fair elections amidst digital misinformation.\n\nAnswer: The Election Commission of India (ECI), established under Article 324, serves as the constitutional guardian of democratic representation.\n\n1. Plenary Authority: Article 324 confers wide powers to superintend, direct, and control elections. The Model Code of Conduct (MCC) now covers digital social media guidelines.\n2. Digital Challenges: Deepfakes, dark patterns, unverified political advertisements, and targeted micro-propaganda threaten the level playing field.\n3. Proactive Reforms: The introduction of the cVIGIL mobile app, Myth vs Reality myth-busting portal, and collaboration with major tech platforms via voluntary codes of ethics.\n\nWay Forward: Providing statutory backing to MCC provisions regarding cyber violations and implementing the Law Commission's recommendations on transparent election financing are critical."
+    },
+    {
+      title: "GS-3: RBI Inflation Targeting",
+      sampleText: "Q: Discuss the effectiveness of the Flexible Inflation Targeting (FIT) framework in balancing economic growth and price stability in India.\n\nAnswer: In 2016, India adopted the Flexible Inflation Targeting framework under Section 45ZB of the RBI Act, setting the CPI target at 4% with a +/- 2% band.\n\n1. Successes: Anchored long-term inflation expectations, prevented hyper-inflation spirals during global shocks, and enhanced transparency through published minutes.\n2. Structural Limitations: India's CPI basket has ~46% weightage in food items, which are driven by monsoon vagaries and supply bottlenecks rather than monetary policy.\n\nConclusion: Monetary measures must be supported by supply-side fiscal initiatives, such as cold-chain logistics, decentralized grain storage, and fuel tax adjustments."
+    },
+    {
+      title: "GS-4: Objectivity vs Empathy",
+      sampleText: "Q: In public administration, can empathy and objectivity coexist without diluting administrative efficiency?\n\nAnswer: Objectivity and empathy are complementary foundational values in the civil service.\n\n1. Objectivity: Ensures rational decision-making based on statutory criteria, preventing favoritism and safeguarding Rule of Law.\n2. Empathy: Ensures that bureaucratic procedures do not disenfranchise vulnerable citizens (e.g., elderly lacking biometrics for ration delivery).\n\nSynthesis: Objectivity defines the legal boundary, while empathy informs compassionate application within that discretion."
+    }
+  ];
 
   // Community / Answer Evaluator State
   const [studentAnswer, setStudentAnswer] = useState('');
@@ -73,11 +92,12 @@ export default function App() {
   const [botMessages, setBotMessages] = useState<Array<{ sender: 'bot' | 'user'; text: string; buttons?: Array<{ text: string; cmd?: string; url?: string }> }>>([
     {
       sender: 'bot',
-      text: `🏛️ <b>UPSC CSE 2026–2027 | Mission Mussoorie 🇮🇳</b>\n<i>Official Prep & LMS Portal by Professor 🥼</i>\n\n🎯 <b>Prelims 2027 Target</b>: 23 May 2027\n📚 <b>Syllabus</b>: GS-1 to GS-4, CSAT, Essay & 16+ Optionals\n👨‍🏫 <b>Institutes</b>: Next IAS, Vision, Forum, Mrunal, Vajiram, PW\n📰 <b>CA Tracker Pro</b>: The Hindu, Indian Express, PIB Daily\n✍️ <b>Mains Evaluator</b>: Instant Rubric Scoring /10\n\n⚡ <i>Zero login friction — instant 1-tap access below:</i>`,
+      text: `🏛️ <b>UPSC CSE 2026–2027 | Mission Mussoorie 🇮🇳</b>\n<i>Official Prep & LMS Portal by Professor 🥼</i>\n\n🎯 <b>Prelims 2027 Target</b>: 23 May 2027\n📚 <b>Syllabus</b>: GS-1 to GS-4, CSAT, Essay & 16+ Optionals\n👨‍🏫 <b>Institutes</b>: Next IAS, Vision, Forum, Mrunal, Vajiram, PW\n📰 <b>CA Tracker Pro</b>: The Hindu, Indian Express, PIB Daily\n✍️ <b>Mains Evaluator</b>: Instant Rubric Scoring /10\n📅 <b>Study Calendar</b>: Google Calendar Sync Active\n\n⚡ <i>Zero login friction — instant 1-tap access below:</i>`,
       buttons: [
         { text: "📚 Open LMS Portal (233+ Batches)", cmd: "/menu" },
         { text: "📰 Daily CA Tracker Pro", cmd: "/ca" },
         { text: "✍️ Mains Answer Evaluator", cmd: "/community" },
+        { text: "📅 Study Calendar", cmd: "/study" },
         { text: "🔥 Trending Batches", cmd: "/trending" },
         { text: "👤 Aspirant Account", cmd: "/account" },
         { text: "📱 1-Tap Verify Mobile", cmd: "/quick_verify" }
@@ -102,7 +122,17 @@ export default function App() {
   const [lockdown, setLockdown] = useState(false);
   const adminChatId = botStatus?.admin_id || 7209486623;
 
-  // Fetch initial health & bot status
+  // Handle Tab Change with URL Query Param sync
+  const handleTabChange = (tab: 'lms' | 'ca' | 'calendar' | 'community' | 'bot' | 'admin') => {
+    setActiveTab(tab);
+    try {
+      const url = new URL(window.location.href);
+      url.searchParams.set('tab', tab);
+      window.history.replaceState({}, '', url.toString());
+    } catch {}
+  };
+
+  // Fetch initial health & bot status & initialize Telegram WebApp
   const loadStatuses = () => {
     fetch('/api/health')
       .then(r => r.json())
@@ -116,6 +146,37 @@ export default function App() {
   };
 
   useEffect(() => {
+    // 1. Initialize Telegram WebApp if embedded
+    if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp) {
+      const tg = (window as any).Telegram.WebApp;
+      try {
+        tg.ready();
+        tg.expand();
+      } catch {}
+    }
+
+    // 2. Read query params (tab, section)
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tabParam = params.get('tab');
+      if (tabParam && ['lms', 'ca', 'calendar', 'community', 'bot', 'admin'].includes(tabParam)) {
+        setActiveTab(tabParam as any);
+      }
+      const secParam = params.get('section');
+      if (secParam) {
+        setSelectedSection(secParam);
+      }
+    } catch {}
+
+    // 3. Load saved verified phone
+    try {
+      const savedPhone = localStorage.getItem('upsc_verified_phone');
+      if (savedPhone) {
+        setPhoneVerified(true);
+        setPhoneNumber(savedPhone);
+      }
+    } catch {}
+
     loadStatuses();
     const interval = setInterval(loadStatuses, 8000);
     return () => clearInterval(interval);
@@ -147,11 +208,17 @@ export default function App() {
       if (data.ok) {
         setPhoneVerified(true);
         setPhoneNumber(phoneInput);
+        try {
+          localStorage.setItem('upsc_verified_phone', phoneInput);
+        } catch {}
         setPhoneFeedback(`✅ Mobile Verified: ${phoneInput} • 50 Bonus Coins Added!`);
       }
     } catch {
       setPhoneVerified(true);
       setPhoneNumber(phoneInput);
+      try {
+        localStorage.setItem('upsc_verified_phone', phoneInput);
+      } catch {}
       setPhoneFeedback(`✅ Mobile Verified: ${phoneInput} • 50 Bonus Coins Added!`);
     } finally {
       setPhoneVerifying(false);
@@ -303,7 +370,7 @@ export default function App() {
       <nav className="bg-slate-950 border-b border-slate-800 px-4 sticky top-[65px] z-30">
         <div className="max-w-7xl mx-auto flex overflow-x-auto space-x-1 py-2 scrollbar-none">
           <button
-            onClick={() => setActiveTab('lms')}
+            onClick={() => handleTabChange('lms')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all shrink-0 ${
               activeTab === 'lms'
                 ? 'bg-sky-600 text-white shadow-md shadow-sky-600/25'
@@ -316,7 +383,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab('ca')}
+            onClick={() => handleTabChange('ca')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all shrink-0 ${
               activeTab === 'ca'
                 ? 'bg-sky-600 text-white shadow-md shadow-sky-600/25'
@@ -329,7 +396,20 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab('community')}
+            onClick={() => handleTabChange('calendar')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all shrink-0 ${
+              activeTab === 'calendar'
+                ? 'bg-sky-600 text-white shadow-md shadow-sky-600/25'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
+            }`}
+          >
+            <Calendar className="w-4 h-4" />
+            <span>Study Calendar</span>
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-900/80 text-blue-300 font-semibold">Google Sync</span>
+          </button>
+
+          <button
+            onClick={() => handleTabChange('community')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all shrink-0 ${
               activeTab === 'community'
                 ? 'bg-sky-600 text-white shadow-md shadow-sky-600/25'
@@ -342,7 +422,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab('bot')}
+            onClick={() => handleTabChange('bot')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all shrink-0 ${
               activeTab === 'bot'
                 ? 'bg-sky-600 text-white shadow-md shadow-sky-600/25'
@@ -354,7 +434,7 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab('admin')}
+            onClick={() => handleTabChange('admin')}
             className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all shrink-0 ${
               activeTab === 'admin'
                 ? 'bg-sky-600 text-white shadow-md shadow-sky-600/25'
@@ -691,23 +771,37 @@ export default function App() {
                     </div>
                   </div>
 
-                  {article.url && (
-                    <div className="pt-4 mt-4 border-t border-slate-800/80">
+                  <div className="pt-4 mt-4 border-t border-slate-800/80 flex items-center justify-between">
+                    <button
+                      onClick={() => setSelectedArticle(article)}
+                      className="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1"
+                    >
+                      <span>Read Analysis</span>
+                      <ChevronRight className="w-3 h-3" />
+                    </button>
+                    {article.url && (
                       <a
                         href={article.url}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-xs text-sky-400 hover:text-sky-300 font-semibold flex items-center gap-1"
+                        className="text-xs text-slate-400 hover:text-slate-200 flex items-center gap-1"
                       >
-                        <span>Open source article</span>
+                        <span>Source</span>
                         <ExternalLink className="w-3 h-3" />
                       </a>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
+        )}
+
+        {/* ========================================================
+            TAB: STUDY CALENDAR & GOOGLE CALENDAR SYNC
+            ======================================================== */}
+        {activeTab === 'calendar' && (
+          <CalendarPlanner />
         )}
 
         {/* ========================================================
@@ -768,6 +862,24 @@ export default function App() {
                 <p className="text-xs text-slate-400 mt-1">
                   Paste your student answer to any GS-1, GS-2, GS-3 or GS-4 question for instant scoring, strengths, and actionable feedback.
                 </p>
+              </div>
+
+              {/* Sample Questions for 1-Click Test */}
+              <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-thin">
+                <span className="text-[11px] text-slate-400 font-semibold shrink-0">Try Sample Answer:</span>
+                {SAMPLE_QUESTIONS.map((sq, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setStudentAnswer(sq.sampleText);
+                      setEvaluationResult(null);
+                    }}
+                    className="text-[11px] px-2.5 py-1 rounded-lg bg-slate-900 hover:bg-slate-800 text-sky-400 border border-slate-800 hover:border-sky-500/50 shrink-0 transition-colors"
+                  >
+                    {sq.title}
+                  </button>
+                ))}
               </div>
 
               <textarea
@@ -997,6 +1109,31 @@ export default function App() {
               </div>
             </div>
 
+            {/* Telegram WebApp URL & Google Sign-In Barrier Elimination Card */}
+            <div className="bg-gradient-to-r from-slate-950 via-indigo-950/40 to-slate-950 p-6 rounded-2xl border border-indigo-900/50 space-y-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                      Public Access • Zero Google Login Prompt
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-950 text-sky-300 border border-sky-800">
+                      Telegram WebApp Ready
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-white">Telegram Mini App Endpoint & Integrations</h3>
+                </div>
+                <div className="text-xs font-mono text-slate-300 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 truncate max-w-sm">
+                  {botStatus?.webapp_base_url || 'https://ais-pre-2w4vncmko2fiwls5psbjos-513814413634.asia-east1.run.app'}
+                </div>
+              </div>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                The Telegram Bot and Mini App menu buttons are configured to point to the public shared URL (<code>ais-pre-...</code>), 
+                eliminating the Google Sign-in screen when opened on mobile Telegram. Firebase and Google Calendar APIs are connected for optional study timetable synchronization with zero forced login.
+              </p>
+            </div>
+
             {/* Health & Cron Trigger */}
             <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-4">
               <div className="flex items-center justify-between">
@@ -1132,28 +1269,135 @@ export default function App() {
             </div>
 
             {enrollSuccess ? (
-              <div className="p-3 bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs rounded-xl flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 shrink-0" />
-                <span>{enrollSuccess}</span>
+              <div className="space-y-3 pt-2">
+                <div className="p-3 bg-emerald-950/80 border border-emerald-800 text-emerald-300 text-xs rounded-xl flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span>{enrollSuccess}</span>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      const botUsername = botStatus?.bot_info?.username || 'csewala_bot';
+                      const botUrl = `https://t.me/${botUsername}?start=buy_${selectedCourse.id}`;
+                      if ((window as any).Telegram?.WebApp) {
+                        (window as any).Telegram.WebApp.openTelegramLink(botUrl);
+                      } else {
+                        window.open(botUrl, '_blank');
+                      }
+                    }}
+                    className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5"
+                  >
+                    <span>Open in Telegram Channel</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setSelectedCourse(null)}
+                    className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl"
+                  >
+                    Done
+                  </button>
+                </div>
               </div>
             ) : (
-              <div className="flex gap-2 pt-2">
-                <button
-                  onClick={() => {
-                    setEnrollSuccess(`Instant access token generated for batch ${selectedCourse.batch_id}. Deep link activated!`);
-                  }}
-                  className="flex-1 py-3 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl transition-all shadow-lg shadow-sky-600/20"
-                >
-                  Confirm & Unlock
-                </button>
+              <div className="space-y-2 pt-2">
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setEnrollSuccess(`Instant access token generated for batch ${selectedCourse.batch_id}. Deep link activated!`);
+                    }}
+                    className="flex-1 py-3 bg-sky-600 hover:bg-sky-500 text-white font-semibold text-xs rounded-xl transition-all shadow-lg shadow-sky-600/20"
+                  >
+                    Confirm & Unlock
+                  </button>
+                  <button
+                    onClick={() => {
+                      const botUsername = botStatus?.bot_info?.username || 'csewala_bot';
+                      const botUrl = `https://t.me/${botUsername}?start=buy_${selectedCourse.id}`;
+                      if ((window as any).Telegram?.WebApp) {
+                        (window as any).Telegram.WebApp.openTelegramLink(botUrl);
+                      } else {
+                        window.open(botUrl, '_blank');
+                      }
+                    }}
+                    className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs rounded-xl transition-all shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-1.5"
+                  >
+                    <span>Open in Bot</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                </div>
                 <button
                   onClick={() => setSelectedCourse(null)}
-                  className="px-4 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl transition-colors"
+                  className="w-full py-2 bg-slate-800/80 hover:bg-slate-800 text-slate-400 hover:text-slate-200 text-xs font-medium rounded-xl transition-colors"
                 >
                   Cancel
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* CA Article Reader Modal */}
+      {selectedArticle && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200 max-h-[85vh] overflow-y-auto">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <span className="text-xs font-semibold text-sky-400 uppercase tracking-wider">{selectedArticle.source} • {selectedArticle.date}</span>
+                <h3 className="font-bold text-lg text-white mt-1">{selectedArticle.title}</h3>
+                <span className="inline-block mt-1 text-[11px] px-2 py-0.5 rounded-md bg-indigo-950/60 text-indigo-300 border border-indigo-800/60">
+                  Topic: {selectedArticle.topic}
+                </span>
+              </div>
+              <button
+                onClick={() => setSelectedArticle(null)}
+                className="text-slate-400 hover:text-slate-200 text-lg leading-none"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 space-y-3">
+              <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Curated Summary & Analysis</h4>
+              <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-line font-sans">
+                {selectedArticle.summary}
+              </p>
+
+              {(selectedArticle.location || selectedArticle.organisation) && (
+                <div className="flex flex-wrap gap-2 pt-2 border-t border-slate-800/80">
+                  {selectedArticle.location && (
+                    <span className="text-xs px-2.5 py-1 rounded-lg bg-emerald-950/60 text-emerald-300 border border-emerald-800/60">
+                      📍 Location: {selectedArticle.location}
+                    </span>
+                  )}
+                  {selectedArticle.organisation && (
+                    <span className="text-xs px-2.5 py-1 rounded-lg bg-indigo-950/60 text-indigo-300 border border-indigo-800/60">
+                      🏛 Organisation: {selectedArticle.organisation}
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2">
+              {selectedArticle.url && (
+                <a
+                  href={selectedArticle.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5"
+                >
+                  <span>Open Full Source</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+              )}
+              <button
+                onClick={() => setSelectedArticle(null)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-xl"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

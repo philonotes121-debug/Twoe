@@ -1,0 +1,107 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    // --- Users Collection ---
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['id', 'email', 'role']) &&
+             data.keys().hasOnly(['id', 'email', 'displayName', 'role', 'phone', 'coins', 'streak', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id == request.auth.uid &&
+             data.email is string && data.email.size() <= 256 &&
+             data.role in ['student', 'admin'] &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 128)) &&
+             (!('phone' in data) || (data.phone is string && data.phone.size() <= 32)) &&
+             (!('coins' in data) || data.coins is number) &&
+             (!('streak' in data) || data.streak is number);
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(request.resource.data);
+      allow update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(request.resource.data) &&
+                       request.resource.data.id == resource.data.id &&
+                       request.resource.data.role == resource.data.role;
+      allow delete: if false;
+    }
+
+    // --- Study Plans Collection ---
+    function isValidStudyPlan(data) {
+      return data.keys().hasAll(['id', 'userId', 'title', 'date']) &&
+             data.keys().hasOnly(['id', 'userId', 'title', 'description', 'subject', 'date', 'startTime', 'endTime', 'isSyncedToGoogle', 'googleEventId', 'completed', 'createdAt', 'updatedAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.title is string && data.title.size() > 0 && data.title.size() <= 256 &&
+             data.date is string && data.date.size() <= 32 &&
+             (!('description' in data) || (data.description is string && data.description.size() <= 2048)) &&
+             (!('subject' in data) || (data.subject is string && data.subject.size() <= 64)) &&
+             (!('startTime' in data) || (data.startTime is string && data.startTime.size() <= 16)) &&
+             (!('endTime' in data) || (data.endTime is string && data.endTime.size() <= 16)) &&
+             (!('isSyncedToGoogle' in data) || data.isSyncedToGoogle is bool) &&
+             (!('googleEventId' in data) || (data.googleEventId is string && data.googleEventId.size() <= 128)) &&
+             (!('completed' in data) || data.completed is bool);
+    }
+
+    match /study_plans/{planId} {
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(planId) && isValidStudyPlan(request.resource.data);
+      allow update: if isSignedIn() && isValidId(planId) && isValidStudyPlan(request.resource.data) &&
+                       resource.data.userId == request.auth.uid &&
+                       request.resource.data.userId == resource.data.userId &&
+                       request.resource.data.id == resource.data.id;
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // --- Mains Answer Evaluations Collection ---
+    function isValidEvaluation(data) {
+      return data.keys().hasAll(['id', 'userId', 'answer', 'feedback']) &&
+             data.keys().hasOnly(['id', 'userId', 'question', 'answer', 'feedback', 'score', 'createdAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.answer is string && data.answer.size() <= 10000 &&
+             data.feedback is string && data.feedback.size() <= 10000 &&
+             (!('question' in data) || (data.question is string && data.question.size() <= 1024)) &&
+             (!('score' in data) || data.score is number);
+    }
+
+    match /evaluations/{evalId} {
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(evalId) && isValidEvaluation(request.resource.data);
+      allow delete: if isSignedIn() && resource.data.userId == request.auth.uid;
+    }
+
+    // --- Course Enrollments Collection ---
+    function isValidEnrollment(data) {
+      return data.keys().hasAll(['id', 'userId', 'courseId', 'courseName']) &&
+             data.keys().hasOnly(['id', 'userId', 'courseId', 'courseName', 'batchId', 'enrolledAt']) &&
+             data.id is string && data.id.size() <= 128 &&
+             data.userId is string && data.userId == request.auth.uid &&
+             data.courseId is number &&
+             data.courseName is string && data.courseName.size() <= 256;
+    }
+
+    match /enrollments/{enrollmentId} {
+      allow get: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(enrollmentId) && isValidEnrollment(request.resource.data);
+    }
+  }
+}
