@@ -1,0 +1,8 @@
+{
+  "name": "Secure LMS Telegram Bot & Mini App Portal",
+  "description": "Telegram LMS Mini App portal for UPSC prep: Course Catalog, CA Tracker Pro, Community Dashboard, Answer Evaluation, and Bot Management.",
+  "permissions": [],
+  "capabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
