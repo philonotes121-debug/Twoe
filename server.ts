@@ -3,6 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import fs from 'fs';
 import { GoogleGenAI } from '@google/genai';
+import { timingSafeEqual } from 'node:crypto';
 import { SECTIONS } from './src/data/sections';
 import { COURSES } from './src/data/courses';
 import { CA_ARTICLES } from './src/data/caArticles';
@@ -17,26 +18,25 @@ const HOST = '0.0.0.0';
 app.disable('x-powered-by');
 
 app.use((_req, res, next) => {
-  res.setHeader('Server', 'Cloudflare-Shield/2.0');
   res.setHeader('X-Content-Type-Options', 'nosniff');
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  res.setHeader('X-Frame-Options', 'ALLOWALL'); // Essential for Telegram WebApp embedding
   next();
 });
 
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '64kb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // Configuration from Environment
 const BOT_TOKEN = (process.env.BOT_TOKEN || "").trim();
-const ADMIN_ID = parseInt(process.env.ADMIN_ID || "7209486623", 10);
-const BACKUP_CHANNEL = (process.env.BACKUP_CHANNEL || "@upsc_course_backup").trim().replace(/^@/, '');
+const TELEGRAM_WEBHOOK_SECRET = (process.env.TELEGRAM_WEBHOOK_SECRET || "").trim();
+const ADMIN_ID = parseInt(process.env.ADMIN_ID || "0", 10);
+const BACKUP_CHANNEL = (process.env.BACKUP_CHANNEL || "").trim().replace(/^@/, '');
 const rawBaseUrl = (process.env.WEBAPP_BASE_URL || "").trim();
 let WEBAPP_BASE_URL = (
   rawBaseUrl && !rawBaseUrl.includes("YOUR-VERCEL-DOMAIN") && !rawBaseUrl.includes("example.com")
     ? rawBaseUrl
-    : "https://ais-pre-2w4vncmko2fiwls5psbjos-513814413634.asia-east1.run.app"
+    : "http://localhost:3000"
 ).replace(/\/$/, "");
 
 // -------------------------------------------------------------
@@ -56,47 +56,20 @@ interface AspirantRecord {
 }
 
 const aspirantsDirectory = new Map<number, AspirantRecord>();
+const adminReplyTargets = new Map<number, number>();
+const knownGroupChats = new Set<number>();
+const scheduledDeletionMs = 10 * 60 * 60 * 1000;
+let lastCountdownBroadcastDate = '';
 
-// Pre-seed Admin Aspirant
-aspirantsDirectory.set(ADMIN_ID, {
-  userId: ADMIN_ID,
-  username: "ProfessorAdmin",
-  firstName: "Professor 🥼",
-  phone: "+91-9876543210",
-  isVerified: true,
-  channelJoined: true,
-  joinedAt: new Date().toISOString(),
-  lastActive: new Date().toISOString(),
-  coins: 99999,
-  activities: ["Admin VIP Access Active"]
-});
-
-// Seed a few sample verified aspirants for demonstration and metrics
-aspirantsDirectory.set(1001, {
-  userId: 1001,
-  username: "aspirant_rohit",
-  firstName: "Rohit Sharma",
-  phone: "+91-9823412091",
-  isVerified: true,
-  channelJoined: true,
-  joinedAt: "2026-09-15T10:00:00.000Z",
-  lastActive: new Date().toISOString(),
-  coins: 150,
-  activities: ["Enrolled in CSE-218 (Mrunal Economy)"]
-});
-
-aspirantsDirectory.set(1002, {
-  userId: 1002,
-  username: "priya_ias",
-  firstName: "Priya Verma",
-  phone: "+91-9876501234",
-  isVerified: true,
-  channelJoined: true,
-  joinedAt: "2026-09-20T12:00:00.000Z",
-  lastActive: new Date().toISOString(),
-  coins: 200,
-  activities: ["CA Tracker Pro Active"]
-});
+function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, character => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  })[character] || character);
+}
 
 function getOrCreateAspirant(fromUser: any): AspirantRecord {
   const userId = fromUser.id;
@@ -106,12 +79,12 @@ function getOrCreateAspirant(fromUser: any): AspirantRecord {
       userId,
       username: fromUser.username || "",
       firstName: fromUser.first_name || "Aspirant",
-      phone: userId === ADMIN_ID ? "+91-9876543210" : undefined,
+      phone: undefined,
       isVerified: userId === ADMIN_ID,
       channelJoined: userId === ADMIN_ID,
       joinedAt: new Date().toISOString(),
       lastActive: new Date().toISOString(),
-      coins: userId === ADMIN_ID ? 9999 : 50,
+      coins: 0,
       activities: []
     };
     aspirantsDirectory.set(userId, record);
@@ -145,6 +118,9 @@ let botInfo: { id: number; username: string; first_name: string } | null = null;
 let botPollingActive = false;
 let lastUpdateId = 0;
 let updatesProcessedCount = 0;
+let lastMorningBroadcastDate = '';
+let lastNightBroadcastDate = '';
+let countdownTarget = { title: 'UPSC CSE Prelims 2027', date: '2027-05-23', time: '09:30' };
 
 // Telegram API Helper
 async function tgApi(method: string, payload: any = {}) {
@@ -175,10 +151,126 @@ async function notifyAdmin(htmlMessage: string) {
   }
 }
 
+async function reportUserActivity(message: any, asp: AspirantRecord): Promise<void> {
+  if (ADMIN_ID <= 0 || !BOT_TOKEN) return;
+
+  const body = String(message.text || message.caption || '').trim();
+  const excerpt = body ? escapeHtml(body.slice(0, 280)) : 'Sent an attachment or interaction.';
+  const result = await tgApi('sendMessage', {
+    chat_id: ADMIN_ID,
+    parse_mode: 'HTML',
+    text: `👤 <b>User activity</b>\n${escapeHtml(asp.firstName)} (@${escapeHtml(asp.username || 'no username')})\nID: <code>${asp.userId}</code>\n${excerpt}\n\nReply to this report to message the user.`
+  });
+
+  const reportMessageId = result?.result?.message_id;
+  if (result?.ok && Number.isInteger(reportMessageId)) {
+    adminReplyTargets.set(reportMessageId, asp.userId);
+    if (adminReplyTargets.size > 500) {
+      const oldestMessageId = adminReplyTargets.keys().next().value;
+      if (oldestMessageId !== undefined) adminReplyTargets.delete(oldestMessageId);
+    }
+  }
+
+  if (!body && message.message_id && message.chat?.id) {
+    const copyResult = await tgApi('copyMessage', {
+      chat_id: ADMIN_ID,
+      from_chat_id: message.chat.id,
+      message_id: message.message_id
+    });
+    const copiedMessageId = copyResult?.result?.message_id;
+    if (copyResult?.ok && Number.isInteger(copiedMessageId)) {
+      adminReplyTargets.set(copiedMessageId, asp.userId);
+    }
+  }
+}
+
+async function sendTimedMessage(chatId: number, text: string, pin = false): Promise<boolean> {
+  const result = await tgApi('sendMessage', { chat_id: chatId, text });
+  const messageId = result?.result?.message_id;
+  if (!result?.ok || !Number.isInteger(messageId)) return false;
+
+  if (pin) {
+    await tgApi('pinChatMessage', {
+      chat_id: chatId,
+      message_id: messageId,
+      disable_notification: true
+    });
+  }
+
+  setTimeout(() => {
+    tgApi('deleteMessage', { chat_id: chatId, message_id: messageId }).catch(() => {});
+  }, scheduledDeletionMs);
+  return true;
+}
+
+async function broadcastPersonalMessage(text: string, includeGroups = false): Promise<{ sent: number; failed: number }> {
+  let sent = 0;
+  let failed = 0;
+
+  for (const userId of aspirantsDirectory.keys()) {
+    if (userId === ADMIN_ID) continue;
+    if (await sendTimedMessage(userId, text)) sent += 1;
+    else failed += 1;
+  }
+
+  if (includeGroups) {
+    for (const chatId of knownGroupChats) {
+      if (await sendTimedMessage(chatId, text, true)) sent += 1;
+      else failed += 1;
+    }
+  }
+
+  return { sent, failed };
+}
+
+async function generateDailyBroadcast(kind: 'morning' | 'night'): Promise<string> {
+  const emoji = kind === 'morning' ? '🌅' : '🌙';
+  const fallback = kind === 'morning'
+    ? 'Choose one UPSC topic, revise it actively, and complete one focused study block today.'
+    : 'Write down one thing you learned today, choose tomorrow’s first task, and rest well.';
+  const ai = getValidGeminiClient();
+  if (!ai) return `${emoji} ${fallback}`;
+
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: `Write one concise ${kind === 'morning' ? 'morning' : 'night'} UPSC CSE study message, maximum 35 words. Be specific, useful, calm, and relevant. No fake facts, quotes, promises, or pressure. Return plain text only.`
+    });
+    const generated = response.text?.trim().replace(/[*_`<>]/g, '').slice(0, 240);
+    return `${emoji} ${generated || fallback}`;
+  } catch {
+    return `${emoji} ${fallback}`;
+  }
+}
+
+async function broadcastCountdown(): Promise<{ sent: number; failed: number }> {
+  const examAt = Date.parse(`${countdownTarget.date}T${countdownTarget.time}:00+05:30`);
+  const remainingMs = Math.max(0, examAt - Date.now());
+  const days = Math.floor(remainingMs / 86_400_000);
+  const hours = Math.floor((remainingMs % 86_400_000) / 3_600_000);
+  const minutes = Math.floor((remainingMs % 3_600_000) / 60_000);
+  const text = `⏳ ${countdownTarget.title} countdown\n${days} days, ${hours} hours, ${minutes} minutes remaining.\n\n📚 Open the bot menu to continue your preparation.`;
+  let sent = 0;
+  let failed = 0;
+
+  for (const userId of aspirantsDirectory.keys()) {
+    if (userId === ADMIN_ID) continue;
+    if (await sendTimedMessage(userId, text)) sent += 1;
+    else failed += 1;
+  }
+
+  for (const chatId of knownGroupChats) {
+    if (await sendTimedMessage(chatId, text, true)) sent += 1;
+    else failed += 1;
+  }
+
+  return { sent, failed };
+}
+
 // Check if user is a member of the mandatory backup channel
 async function isUserInBackupChannel(userId: number): Promise<boolean> {
   if (userId === ADMIN_ID) return true;
-  if (!BACKUP_CHANNEL) return true;
+  if (!BACKUP_CHANNEL) return false;
 
   try {
     const res = await tgApi('getChatMember', {
@@ -187,7 +279,8 @@ async function isUserInBackupChannel(userId: number): Promise<boolean> {
     });
     if (res && res.ok && res.result) {
       const status = res.result.status;
-      return ['creator', 'administrator', 'member', 'restricted'].includes(status);
+      return ['creator', 'administrator', 'member'].includes(status) ||
+        (status === 'restricted' && res.result.is_member === true);
     }
   } catch (err) {
     console.warn("[Backup Channel Check Notice]:", err);
@@ -197,7 +290,7 @@ async function isUserInBackupChannel(userId: number): Promise<boolean> {
 
 // Helper to safely get an authenticated Google GenAI client
 function getValidGeminiClient(): GoogleGenAI | null {
-  const candidate = (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || "").trim();
+  const candidate = (process.env.GEMINI_API_KEY || "").trim();
   // Standard Google Gemini API keys are at least 35 characters long and start with 'AIzaSy'
   if (candidate && candidate.startsWith('AIzaSy') && candidate.length >= 35) {
     try {
@@ -216,16 +309,14 @@ async function generateHumanLikeReply(query: string, asp: AspirantRecord): Promi
 
   if (ai) {
     try {
-      const prompt = `You are a real senior academic mentor assisting Professor at "UPSC Course Zone 🥼".
-You are responding directly to an aspirant named ${asp.firstName} on Telegram.
+      const prompt = `You are the AI study assistant for the UPSC Course Zone learning portal.
+    You are responding to an aspirant named ${asp.firstName} on Telegram.
 
 CRITICAL INSTRUCTIONS:
-- Tone: Human, respectful, encouraging, crisp Indian UPSC educator tone (Hinglish/English mix).
-- NEVER reveal you are an AI. Never use phrases like "As an AI language model", "I am a bot", or robotic disclaimers.
-- Speak in first-person as part of Professor's core team ("Namaste ${asp.firstName}! Professor's desk here...", "Haan bilkul, humare paas...").
-- Keep the response extremely to-the-point (2-4 lines).
-- If they ask about batches, guide them to /menu or the LMS Mini App. If they ask a UPSC concept, answer accurately.
-- No irrelevant text or disclaimers.
+    - Be transparent that you are an AI assistant; do not impersonate an Admin or human staff member.
+    - Answer only UPSC study, course-catalog, and portal questions; redirect unrelated requests briefly.
+    - Match the user's language and keep answers concise and factual (2-4 lines).
+    - Do not invent course availability, prices, or account status. Use /menu for current catalog details.
 
 Aspirant Message: "${query}"`;
 
@@ -243,56 +334,99 @@ Aspirant Message: "${query}"`;
 
   // Domain-specific smart mentor response when AI is offline or key is pending
   if (qLower.includes('mrunal') || qLower.includes('economy') || qLower.includes('pcb')) {
-    return `Namaste ${asp.firstName}! Mrunal Sir ka Economy PCB 15/16 complete batch handouts aur test series ke saath LMS me live hai (Fee: ₹300). Aap direct /menu ya LMS Mini App se access le sakte hain.`;
+    return `AI study assistant: Check /menu or the LMS catalog for current Economy course details.`;
   }
 
   if (qLower.includes('foundation') || qLower.includes('gs') || qLower.includes('2027') || qLower.includes('prelims')) {
-    return `Namaste ${asp.firstName}! UPSC CSE 2026-27 ke liye Forum IAS, Next IAS aur Vision IAS ke Comprehensive Foundation batches active hain. /menu me jakar GS Foundation section open karein.`;
+    return `AI study assistant: Open /menu and choose the GS Foundation section to see the current catalog.`;
   }
 
   if (qLower.includes('optional') || qLower.includes('psir') || qLower.includes('history') || qLower.includes('anthropology') || qLower.includes('geography')) {
-    return `Namaste ${asp.firstName}! Humare portal par sabhi top Optionals (History, PSIR, Anthropology, Geography, Sociology) ke complete lectures available hain. Check karne ke liye /menu type karein.`;
+    return `AI study assistant: Open /menu and choose Optional Subjects to check current availability.`;
   }
 
   if (qLower.includes('price') || qLower.includes('fees') || qLower.includes('kitna') || qLower.includes('discount')) {
-    return `Namaste ${asp.firstName}! Sabhi courses par special aspirant discount chal raha hai (₹200 se ₹1200 tak). Saath hi UPSC2027 coupon code se extra 20% off milta hai.`;
+    return `AI study assistant: Current prices and offers are listed in the LMS catalog. I can't confirm an offer without current catalog data.`;
   }
 
   if (qLower.includes('ca') || qLower.includes('current affairs') || qLower.includes('hindu') || qLower.includes('pib')) {
-    return `Namaste ${asp.firstName}! CA Tracker Pro me daily The Hindu, Indian Express, PIB aur Places in News daily update hote hain. Direct check karne ke liye /ca type karein ya Mini App open karein!`;
+    return `AI study assistant: Open /ca to access the Current Affairs section.`;
   }
 
-  return `Namaste ${asp.firstName}! Professor's desk here. Aapka query receive ho gaya hai. Aap /menu se sabhi foundation aur optional batches check kar sakte hain. Batch enroll karne ke liye LMS Mini App launch karein!`;
+  return `I'm the portal's AI study assistant. I can help with UPSC study topics or guide you to /menu for the course catalog.`;
 }
 
 // -------------------------------------------------------------
 // Telegram Message Dispatcher
 // -------------------------------------------------------------
+function normalizeCourseSearch(value: string): string[] {
+  const normalized = value.toLowerCase()
+    .replace(/\bdip(?:in)?\s+sir\b/g, ' dipin ')
+    .replace(/\bdip\b/g, ' dipin ')
+    .replace(/\bca\b/g, ' current affairs ')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+  const ignored = new Set(['a', 'an', 'the', 'course', 'batch', 'class', 'please', 'want', 'need', 'buy', 'sir', 'for', 'of', 'me', 'mujhe', 'chahiye', 'ka', 'ki', 'ke']);
+  return normalized.split(/\s+/).filter(token => token.length > 1 && !ignored.has(token));
+}
+
 async function handleTelegramMessage(message: any) {
   if (!message || !message.chat) return;
   const chatId = message.chat.id;
+  if (message.chat.type === 'group' || message.chat.type === 'supergroup') {
+    knownGroupChats.add(chatId);
+  }
   const fromUser = message.from || {};
   const userId = fromUser.id;
   const isAdmin = ADMIN_ID > 0 && userId === ADMIN_ID;
+
+  if (isAdmin && message.reply_to_message?.message_id) {
+    const recipientId = adminReplyTargets.get(message.reply_to_message.message_id);
+    const replyText = String(message.text || message.caption || '').trim();
+    if (recipientId && replyText) {
+      const result = await tgApi('sendMessage', { chat_id: recipientId, text: replyText.slice(0, 4000) });
+      return tgApi('sendMessage', {
+        chat_id: chatId,
+        text: result?.ok ? '✅ Reply sent to the user.' : 'Could not send the reply. The user may have blocked the bot.'
+      });
+    }
+  }
 
   // Multi-user aspirant directory tracking
   const asp = getOrCreateAspirant(fromUser);
 
   // 1. Handle Contact Sharing (1-Click Phone Verification)
   if (message.contact) {
+    if (message.chat.type !== 'private' || message.contact.user_id !== userId) {
+      return tgApi('sendMessage', {
+        chat_id: chatId,
+        text: "Please share your own phone number from a private chat to verify it."
+      });
+    }
+
+    if (!await isUserInBackupChannel(userId)) {
+      return tgApi('sendMessage', {
+        chat_id: chatId,
+        text: `Join the backup channel first, then share your own contact to verify your number.`,
+        reply_markup: {
+          inline_keyboard: [[{ text: "Join backup channel", url: `https://t.me/${BACKUP_CHANNEL}` }]]
+        }
+      });
+    }
+
+    const firstVerification = !asp.isVerified;
     const phone = message.contact.phone_number;
     asp.phone = phone;
     asp.isVerified = true;
-    asp.coins += 50;
-    asp.activities.push(`Phone verified: ${phone}`);
+    if (firstVerification) asp.coins += 50;
+    asp.activities.push("Phone number verified through Telegram contact sharing");
 
-    // Notify Admin in copy-paste dossier format
-    await notifyAdmin(`📋 <b>[PHONE VERIFICATION DOSSIER]</b>\n━━━━━━━━━━━━━━━━━━━━\n• User ID: <code>${userId}</code>\n• Name: <b>${asp.firstName}</b> (@${asp.username || 'None'})\n• Phone: <code>${phone}</code>\n• Status: VERIFIED ✅ (+50 Coins Added)\n• Time: <code>${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })}</code>\n━━━━━━━━━━━━━━━━━━━━`);
+    await notifyAdmin(`Phone verification completed for Telegram user <code>${userId}</code>.`);
 
     return tgApi('sendMessage', {
       chat_id: chatId,
       parse_mode: 'HTML',
-      text: `✅ <b>Mobile Number Verified:</b> <code>${phone}</code>\n\n🎉 <b>Full LMS Access Unlocked!</b>\n• 50 Bonus Coins credited to your wallet\n• Zero login barrier in LMS Mini App\n• Tap below to access all 233+ batches & video handouts:`,
+      text: `✅ <b>Your phone number is verified.</b>${firstVerification ? '\n50 bonus coins added.' : ''}\n\nOpen the LMS from the menu when ready.`,
       reply_markup: {
         inline_keyboard: [
           [{ text: "📚 Launch LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }],
@@ -305,22 +439,20 @@ async function handleTelegramMessage(message: any) {
   const rawText = (message.text || "").trim();
   const text = rawText.toLowerCase();
 
-  // Log user activity
-  asp.activities.push(`Text: "${rawText.slice(0, 40)}" at ${new Date().toLocaleTimeString()}`);
-
-  // Forward activity log to admin if non-admin message
-  if (!isAdmin) {
-    notifyAdmin(`💬 <b>[USER ACTIVITY LOG]</b>\n• User: <b>${asp.firstName}</b> (<code>${userId}</code>)\n• Message: <i>"${rawText.slice(0, 100)}"</i>\n• Phone: <code>${asp.phone || 'Pending'}</code>`);
-  }
-
   // -----------------------------------------------------------
   // Check Mandatory Backup Channel Gate (for non-admin users)
   // -----------------------------------------------------------
-  if (!isAdmin && !asp.channelJoined) {
+  if (!isAdmin) {
     const isJoined = await isUserInBackupChannel(userId);
     if (isJoined) {
       asp.channelJoined = true;
     } else {
+      if (!BACKUP_CHANNEL) {
+        return tgApi('sendMessage', {
+          chat_id: chatId,
+          text: "Access is temporarily unavailable because the required backup channel has not been configured."
+        });
+      }
       // Show mandatory backup channel join gate
       return tgApi('sendMessage', {
         chat_id: chatId,
@@ -337,12 +469,28 @@ async function handleTelegramMessage(message: any) {
     }
   }
 
+  if (!isAdmin && (rawText || message.caption || message.photo || message.document || message.voice)) {
+    await reportUserActivity(message, asp);
+  }
+
   // -----------------------------------------------------------
   // /start Command Handler
   // -----------------------------------------------------------
   if (text.startsWith('/start')) {
     const parts = rawText.split(' ');
     const param = parts[1] || '';
+
+    if (param === 'verify_phone') {
+      return tgApi('sendMessage', {
+        chat_id: chatId,
+        text: "Share your own contact to verify your phone number. The bot will not accept someone else's contact.",
+        reply_markup: {
+          keyboard: [[{ text: "Share my phone number", request_contact: true }]],
+          resize_keyboard: true,
+          one_time_keyboard: true
+        }
+      });
+    }
 
     if (param.startsWith('buy_')) {
       const courseId = parseInt(param.replace('buy_', ''), 10);
@@ -351,10 +499,10 @@ async function handleTelegramMessage(message: any) {
         return tgApi('sendMessage', {
           chat_id: chatId,
           parse_mode: 'HTML',
-          text: `🎓 <b>Course Enrollment: ${course.name}</b>\n\n• Batch: <code>${course.batch_id}</code>\n• Faculty: <b>${course.faculty}</b>\n• Medium: <b>${course.medium}</b>\n• Fee: <b>₹${course.price}</b>\n• Inclusions: ${course.notes}\n\nTap below to confirm instant access:`,
+          text: `🎓 <b>Course Enrollment: ${course.name}</b>\n\n• Batch: <code>${course.batch_id}</code>\n• Fee: <b>₹${course.price}</b>\n\nNo payment is processed in this bot yet. Submit an enrollment request for Admin review; access is not granted until payment is verified.`,
           reply_markup: {
             inline_keyboard: [
-              [{ text: "✅ Confirm & Unlock Course", callback_data: `confirm_buy:${course.id}` }],
+              [{ text: "Request enrollment review", callback_data: `confirm_buy:${course.id}` }],
               [{ text: "📚 Open in LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }]
             ]
           }
@@ -377,19 +525,23 @@ async function handleTelegramMessage(message: any) {
 
     // Precise, concise, UPSC-oriented welcome message
     const welcomeHtml = `🏛️ <b>UPSC CSE 2026–2027 | Mission Mussoorie 🇮🇳</b>
-<i>Official Prep & LMS Portal by Professor 🥼</i>
+<i>UPSC learning portal</i>
 
 🎯 <b>Prelims 2027 Target</b>: 23 May 2027
 📚 <b>Syllabus</b>: GS-1 to GS-4, CSAT, Essay & 16+ Optionals
 👨‍🏫 <b>Institutes</b>: Next IAS, Vision, Forum, Mrunal, Vajiram, PW
 📰 <b>CA Tracker Pro</b>: The Hindu, Indian Express, PIB Daily
 ✍️ <b>Mains Evaluator</b>: Instant Rubric Scoring /10
-📅 <b>Study Calendar</b>: Google Calendar Sync Active
+📅 <b>Study Calendar</b>: Local planner
+
+<i>Bot messages and support requests may be shared with the Admin to provide support.</i>
 
 ⚡ <i>Zero login friction — instant 1-tap access below:</i>`;
 
     const userKeyboard: any[] = [
-      [{ text: "📚 Open LMS Portal (233+ Batches)", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }],
+      [asp.isVerified
+        ? { text: "📚 Open LMS Portal", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }
+        : { text: "📱 Verify phone for LMS", callback_data: "quick_verify" }],
       [{ text: "📰 Daily CA Tracker Pro", web_app: { url: `${WEBAPP_BASE_URL}/?tab=ca` } }, { text: "✍️ Mains Answer Evaluator", web_app: { url: `${WEBAPP_BASE_URL}/?tab=community` } }],
       [{ text: "📅 Study Calendar (Google Sync)", web_app: { url: `${WEBAPP_BASE_URL}/?tab=calendar` } }],
       [{ text: "📋 Course Tracks & Pricing", callback_data: "menu:main" }, { text: "👤 Aspirant Account", callback_data: "account" }],
@@ -418,9 +570,11 @@ async function handleTelegramMessage(message: any) {
       chat_id: chatId,
       parse_mode: 'HTML',
       text: `📚 <b>UPSC Course Zone — Course Tracks</b>\n\nSelect a track to inspect batches or open full LMS:`,
-      reply_markup: {
+        reply_markup: {
         inline_keyboard: [
-          [{ text: "📚 Open Full LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }],
+          [asp.isVerified
+            ? { text: "📚 Open Full LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` } }
+            : { text: "📱 Verify phone to access LMS", callback_data: "quick_verify" }],
           [{ text: "🏛 GS Foundation", callback_data: "cat:upsc_foundation" }, { text: "📗 Optional Subjects", callback_data: "cat:upsc_optional" }],
           [{ text: "📝 Prelims & Mains Test Series", callback_data: "cat:test_series" }, { text: "🏢 State PSC", callback_data: "cat:state_psc" }],
           [{ text: "🎁 Combo Deals", callback_data: "cat:combo" }, { text: "🔥 Trending Batches", callback_data: "trending" }]
@@ -512,8 +666,7 @@ async function handleTelegramMessage(message: any) {
 
     return tgApi('sendMessage', {
       chat_id: chatId,
-      parse_mode: 'HTML',
-      text: `👨‍🏫 <b>Professor Mentor Response:</b>\n\n${answerText.slice(0, 3800)}`,
+      text: `🤖 AI study assistant:\n\n${answerText.slice(0, 3800)}`,
       reply_markup: {
         inline_keyboard: [
           [{ text: "✍️ Write & Evaluate Answer", web_app: { url: `${WEBAPP_BASE_URL}/?tab=community` } }]
@@ -550,6 +703,44 @@ async function handleTelegramMessage(message: any) {
 
   // -----------------------------------------------------------
   // ALL 40 ADMINISTRATOR COMMANDS (Strictly Isolated to Admin ID)
+  if (isAdmin && text.startsWith('/broadcast')) {
+    const content = rawText.replace(/^\/broadcast\s*/i, '').trim();
+    if (!content) {
+      return tgApi('sendMessage', { chat_id: chatId, text: 'Usage: /broadcast <message>' });
+    }
+    const result = await broadcastPersonalMessage(`📢 ${content.slice(0, 3500)}`, true);
+    return tgApi('sendMessage', {
+      chat_id: chatId,
+      text: `Broadcast sent to ${result.sent} known chats; ${result.failed} failed. Groups are pinned when allowed; messages are scheduled for deletion after 10 hours while the process runs.`
+    });
+  }
+
+  if (isAdmin && text.startsWith('/countdown set ')) {
+    const match = rawText.match(/^\/countdown\s+set\s+(\d{4}-\d{2}-\d{2})\s+(.+)$/i);
+    if (!match) {
+      return tgApi('sendMessage', { chat_id: chatId, text: 'Usage: /countdown set YYYY-MM-DD <event name>' });
+    }
+    const [year, month, day] = match[1].split('-').map(Number);
+    const check = new Date(Date.UTC(year, month - 1, day));
+    if (check.getUTCFullYear() !== year || check.getUTCMonth() !== month - 1 || check.getUTCDate() !== day) {
+      return tgApi('sendMessage', { chat_id: chatId, text: 'Invalid date. Use a real date in YYYY-MM-DD format.' });
+    }
+    countdownTarget = { title: match[2].slice(0, 80), date: match[1], time: '09:30' };
+    return tgApi('sendMessage', {
+      chat_id: chatId,
+      text: `Countdown target set: ${countdownTarget.title}, ${countdownTarget.date} at 09:30 IST. This setting is temporary and resets when the process restarts.`
+    });
+  }
+
+  if (isAdmin && text.startsWith('/promo ')) {
+    const content = rawText.replace(/^\/promo\s*/i, '').trim();
+    const result = await broadcastPersonalMessage(`📣 ${content.slice(0, 3500)}`, true);
+    return tgApi('sendMessage', {
+      chat_id: chatId,
+      text: `Promo message sent to ${result.sent} known chats; ${result.failed} failed. Groups are pinned when allowed and messages are scheduled for deletion after 10 hours while the process runs.`
+    });
+  }
+
   // -----------------------------------------------------------
   if (isAdmin) {
     if (text === '/adminhelp') {
@@ -602,7 +793,7 @@ async function handleTelegramMessage(message: any) {
       return tgApi('sendMessage', {
         chat_id: chatId,
         parse_mode: 'HTML',
-        text: `💳 <b>Recent Orders & Course Grants</b>\n\n1. <b>#103</b>: Prelims Test Series 2027 — ₹700 (Completed)\n2. <b>#102</b>: Forum IAS GS Foundation — ₹1,200 (Completed)\n3. <b>#101</b>: Mrunal Economy PCB 15/16 — ₹300 (Completed)\n4. <b>#100</b>: Vision IAS History Optional — ₹800 (Completed)\n\nAll transactions verified via automated slip audit.`
+        text: `💳 <b>Orders</b>\n\nNo payment provider or verified order ledger is configured. No purchase is confirmed and no course access is granted by this command.`
       });
     }
 
@@ -618,7 +809,7 @@ async function handleTelegramMessage(message: any) {
       return tgApi('sendMessage', {
         chat_id: chatId,
         parse_mode: 'HTML',
-        text: `💎 <b>Paid Subscription Plans</b>\n\n• <b>Community Members (₹800/mo)</b>: 489 active (MRR ₹3,91,200)\n• <b>CA Tracker Pro (₹200/mo)</b>: 312 active (MRR ₹62,400)\n• Combined Monthly Recurring Revenue: <b>₹4,53,600</b>\n• Churn Rate: <b>1.8%</b>`
+        text: `💎 <b>Subscriptions</b>\n\nNo subscription provider or persistent subscription ledger is configured. Active members and recurring revenue cannot currently be verified.`
       });
     }
 
@@ -654,7 +845,7 @@ async function handleTelegramMessage(message: any) {
       return tgApi('sendMessage', {
         chat_id: chatId,
         parse_mode: 'HTML',
-        text: `🚀 <b>Broadcast Dispatched!</b>\n\nMessage sent to <b>${sentCount}</b> registered aspirants in personal chats.`
+        text: `📨 Broadcast request processed for ${sentCount} known personal chats. Delivery failures and group chats are not currently tracked.`
       });
     }
 
@@ -662,7 +853,7 @@ async function handleTelegramMessage(message: any) {
       return tgApi('sendMessage', {
         chat_id: chatId,
         parse_mode: 'HTML',
-        text: `⏱️ <b>Automated Scheduler Tasks</b>\n\n• <b>06:00 IST</b>: Good Morning Editorial Brief (The Hindu / IE)\n• <b>07:30 IST</b>: Daily UPSC Exam Countdown Alert\n• <b>08:00 IST</b>: Daily Prelims MCQ Quiz (GS-1)\n• <b>23:00 IST</b>: Good Night Revision Wrap & Streak Freeze Protection\n• Auto-deletions: Active (24h message lifecycle)`
+        text: `⏱️ <b>Scheduler status</b>\n\nNo persistent scheduler is configured. /gm and /gn are manual commands; countdown broadcast, auto-delete, and scheduled campaigns are unavailable.`
       });
     }
 
@@ -670,7 +861,7 @@ async function handleTelegramMessage(message: any) {
       return tgApi('sendMessage', {
         chat_id: chatId,
         parse_mode: 'HTML',
-        text: `📥 <b>Support Desk Inbox</b>\n\n• Open Tickets: <b>3 pending</b>\n• Resolved Today: <b>28</b>\n• Average Response Time: <b>8 minutes</b>\n\nReply directly to any forwarded user message to answer.`
+        text: `📥 <b>Support inbox</b>\n\nUser messages, course-interest reports, and shared attachments appear in this chat. Reply directly to a report to respond to that user. Reports are kept in memory only while this bot process is running.`
       });
     }
 
@@ -678,7 +869,7 @@ async function handleTelegramMessage(message: any) {
       return tgApi('sendMessage', {
         chat_id: chatId,
         parse_mode: 'HTML',
-        text: `👥 <b>Connected Groups & Channels</b>\n\n• Backup Channel: <b>@${BACKUP_CHANNEL} (Mandatory Gate)</b>\n• Connected Channels: <b>4</b>\n• Study Discussion Groups: <b>14</b>\n• Total Reach: <b>~42,000 aspirants</b>`
+        text: `👥 <b>Groups</b>\n\n• Backup channel configured: <b>${BACKUP_CHANNEL ? 'Yes' : 'No'}</b>\n• Group registry: <b>Not configured</b>\n• Group broadcast and pin status: <b>Unavailable</b>`
       });
     }
 
@@ -686,7 +877,7 @@ async function handleTelegramMessage(message: any) {
       return tgApi('sendMessage', {
         chat_id: chatId,
         parse_mode: 'HTML',
-        text: `🎁 <b>Referral Program Audit</b>\n\n• Total Referrals Recorded: <b>3,410</b>\n• Verified Conversions: <b>2,890</b>\n• Coins Issued: <b>144,500</b>\n• Free Courses Redeemed: <b>128</b>\n• Fraud Multi-accounting Rate: <b>0.2% (blocked by phone HMAC)</b>`
+        text: `🎁 <b>Referral audit</b>\n\nReferral records are not stored in a persistent database, so verified conversion and reward totals are unavailable.`
       });
     }
 
@@ -694,7 +885,7 @@ async function handleTelegramMessage(message: any) {
       return tgApi('sendMessage', {
         chat_id: chatId,
         parse_mode: 'HTML',
-        text: `📊 <b>Platform Analytics Dashboard</b>\n\n• Gross Revenue (MTD): <b>₹5,82,400</b>\n• Active Courses Seeded: <b>${COURSES.length}</b>\n• Unique Mini App Visitors: <b>3,890 this week</b>\n• Answer Evaluations Run: <b>1,420</b>\n• Webhook / Polling Latency: <b><65ms</b>`
+        text: `📊 <b>Platform status</b>\n\n• Users seen by this process: <b>${aspirantsDirectory.size}</b>\n• Catalog records loaded: <b>${COURSES.length}</b>\n• Payment totals, unique visitors, and evaluation counts: <b>Unavailable</b> (no persistent analytics store)`
       });
     }
 
@@ -719,7 +910,7 @@ async function handleTelegramMessage(message: any) {
       return tgApi('sendMessage', {
         chat_id: chatId,
         parse_mode: 'HTML',
-        text: `🛡️ <b>Security Posture & Shield</b>\n\n• Server Disclosures: <b>Obfuscated (Cloudflare Shield Mask)</b>\n• Express Fingerprint: <b>Disabled (X-Powered-By removed)</b>\n• Admin Command Isolation: <b>Strict (Chat ID scoped)</b>\n• Auto-Heal Watchdog: <b>Active (Revival every 25s)</b>\n• Backup Channel Gate: <b>Enforced (@${BACKUP_CHANNEL})</b>`
+        text: `🛡️ <b>Security status</b>\n\n• Admin Telegram commands: <b>Chat ID restricted</b>\n• Telegram webhook: <b>Secret header required</b>\n• Backup-channel gate: <b>${BACKUP_CHANNEL ? 'Configured' : 'Not configured'}</b>\n• No system can guarantee that a bot is unhackable.`
       });
     }
 
@@ -727,7 +918,7 @@ async function handleTelegramMessage(message: any) {
       return tgApi('sendMessage', {
         chat_id: chatId,
         parse_mode: 'HTML',
-        text: `🔒 <b>Privacy Architecture & Compliance</b>\n\n• Student Phone Storage: <b>One-way HMAC Fingerprinted</b>\n• Log Scrubber: <b>Active (Removes bot tokens & secrets from logs)</b>\n• Admin Identity Leak Prevention: <b>Strict</b>`
+        text: `🔒 <b>Privacy status</b>\n\nPhone contacts and activity are held in process memory and are not encrypted or durable. User message reports are sent to this Admin chat after the bot's start notice.`
       });
     }
 
@@ -743,7 +934,7 @@ async function handleTelegramMessage(message: any) {
       return tgApi('sendMessage', {
         chat_id: chatId,
         parse_mode: 'HTML',
-        text: `💾 <b>State Backup Snapshot</b>\n\nTimestamp: <code>${new Date().toISOString()}</code>\nCourses: ${COURSES.length} | Sections: ${SECTIONS.length}\nAspirants in Memory: ${aspirantsDirectory.size}\nState saved to in-memory backup register.`
+        text: `⚠️ <b>Backup unavailable</b>\n\nThis deployment has no persistent backup target configured. Current user state is volatile and will be lost when the process restarts.`
       });
     }
 
@@ -751,7 +942,7 @@ async function handleTelegramMessage(message: any) {
       return tgApi('sendMessage', {
         chat_id: chatId,
         parse_mode: 'HTML',
-        text: `🔄 <b>Recovery & State Rollback</b>\n\nBackup snapshots verified. All course mappings, order records, and user streaks are aligned with the master catalog.`
+        text: `⚠️ <b>Recovery unavailable</b>\n\nNo persistent backup snapshot is configured, so there is no verified state to restore.`
       });
     }
 
@@ -780,10 +971,10 @@ async function handleTelegramMessage(message: any) {
     }
 
     if (text === '/countdown') {
+      const result = await broadcastCountdown();
       return tgApi('sendMessage', {
         chat_id: chatId,
-        parse_mode: 'HTML',
-        text: `⏳ <b>UPSC Prelims 2027 Countdown</b>\n\nOfficial Exam Date: <b>23 May 2027 (Sunday)</b>\nTarget Exam: <b>UPSC CSE Prelims 2027</b>\nStatus: Live countdown timer synced with Mini App header.`
+        text: `⏳ Countdown sent to ${result.sent} chats; ${result.failed} failed. Group messages are pinned when bot permissions allow and deleted after 10 hours while the process is running.`
       });
     }
 
@@ -848,64 +1039,64 @@ async function handleTelegramMessage(message: any) {
       const parts = rawText.split(' ');
       return tgApi('sendMessage', {
         chat_id: chatId,
-        parse_mode: 'HTML',
-        text: `⚠️ <b>Access Revoked</b>\n\nTarget: <code>${parts[1] || 'User'}</code>\nPermissions reset.`
+        text: `Access revocation for ${parts[1] || 'a user'} is unavailable because no persistent enrollment store is configured.`
       });
     }
 
     if (text.startsWith('/courses')) {
       const query = rawText.replace(/\/courses/i, '').trim().toLowerCase();
-      const matches = COURSES.filter(c => !query || c.name.toLowerCase().includes(query) || c.faculty.toLowerCase().includes(query)).slice(0, 6);
-      let out = `📚 <b>Courses Found (${matches.length}/${COURSES.length}):</b>\n\n`;
-      matches.forEach(c => {
-        out += `• <b>${c.name}</b> (Batch <code>${c.batch_id}</code>)\n  Faculty: ${c.faculty} | Fee: ₹${c.price}\n`;
+      const matches = COURSES.filter(course => !query || course.name.toLowerCase().includes(query) || course.faculty.toLowerCase().includes(query)).slice(0, 6);
+      const response = matches.map(course => `• ${course.name} (${course.batch_id}) | ${course.faculty} | ₹${course.price}`).join('\n');
+      return tgApi('sendMessage', {
+        chat_id: chatId,
+        text: response || "No matching courses found in the loaded catalog."
       });
-      return tgApi('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: out });
     }
 
     if (text === '/pricing') {
       return tgApi('sendMessage', {
         chat_id: chatId,
-        parse_mode: 'HTML',
-        text: `💰 <b>Course Pricing Tiers</b>\n\n• Micro Modules (CSAT/Ethics/Essay): <b>₹200 – ₹350</b>\n• Subject Specific (Mrunal Economy, Environment): <b>₹300 – ₹500</b>\n• Optional Batches (Anthropology, PSIR, History): <b>₹500 – ₹1,000</b>\n• Comprehensive GS Foundation (Next IAS, Vision, Forum): <b>₹800 – ₹1,500</b>`
+        text: "Current course prices are available in the LMS catalog. No payment provider is configured."
       });
     }
 
     if (text === '/coupons') {
-      let out = `🎟️ <b>Active Discount Coupons</b>\n\n`;
-      userState.activeCoupons.forEach(c => {
-        out += `• Code: <code>${c.code}</code> (${c.discount}) — Expires: ${c.validTill}\n`;
+      const activeCoupons = userState.activeCoupons.filter(coupon => new Date(`${coupon.validTill}T23:59:59+05:30`).getTime() >= Date.now());
+      const response = activeCoupons.map(coupon => `${coupon.code}: ${coupon.discount}, valid until ${coupon.validTill}`).join('\n');
+      return tgApi('sendMessage', {
+        chat_id: chatId,
+        text: response || "No active coupon is configured."
       });
-      return tgApi('sendMessage', { chat_id: chatId, parse_mode: 'HTML', text: out });
     }
 
     if (text === '/quiz') {
       return tgApi('sendMessage', {
         chat_id: chatId,
-        parse_mode: 'HTML',
-        text: `📝 <b>Daily UPSC Prelims MCQ Broadcasted!</b>\n\n<b>Question:</b> With reference to the Delimitation Commission in India, consider the following:\n1. Its orders cannot be called in question before any court.\n2. The orders take effect from a date specified by the President of India.\n\nSent to connected study groups.`
+        text: "Quiz broadcast is not configured; no group or user message was sent."
       });
     }
 
     if (text === '/gm') {
+      const message = await generateDailyBroadcast('morning');
+      const result = await broadcastPersonalMessage(message, true);
       return tgApi('sendMessage', {
         chat_id: chatId,
-        parse_mode: 'HTML',
-        text: `🌅 <b>Good Morning Motivation Broadcasted!</b>\n\n"Success in UPSC CSE is the sum of small daily efforts, repeated day in and day out."\nDelivered to daily broadcast queue.`
+        text: `🌅 Sent to ${result.sent} known chats; ${result.failed} failed. Group messages are pinned when allowed; messages are scheduled for deletion after 10 hours while the process runs.`
       });
     }
 
     if (text === '/gn') {
+      const message = await generateDailyBroadcast('night');
+      const result = await broadcastPersonalMessage(message, true);
       return tgApi('sendMessage', {
         chat_id: chatId,
-        parse_mode: 'HTML',
-        text: `🌙 <b>Good Night Daily Wrap Broadcasted!</b>\n\nDay's revision checklist & streak protection dispatched to active aspirants.`
+        text: `🌙 Sent to ${result.sent} known chats; ${result.failed} failed. Group messages are pinned when allowed; messages are scheduled for deletion after 10 hours while the process runs.`
       });
     }
 
     if (text.startsWith('/faculty')) {
       const q = rawText.replace(/\/faculty/i, '').trim().toLowerCase();
-      const faculties = Array.from(new Set(COURSES.map(c => c.faculty)));
+      const faculties: string[] = Array.from(new Set(COURSES.map(c => c.faculty)));
       const filtered = faculties.filter(f => !q || f.toLowerCase().includes(q)).slice(0, 10);
       return tgApi('sendMessage', {
         chat_id: chatId,
@@ -936,8 +1127,7 @@ async function handleTelegramMessage(message: any) {
 
       return tgApi('sendMessage', {
         chat_id: chatId,
-        parse_mode: 'HTML',
-        text: `🔍 <b>Aspirant Dossier: ${query || 'Admin'}</b>\n\n• User ID: <code>${query || userId}</code>\n• Status: Active\n• Plan: VIP All-Access\n• Verified Phone: +91-9876543210\n• Enrolled Courses: All 233 Courses Granted`
+        text: `No user record found for ${query || 'the requested account'}. No phone or course access data is available.`
       });
     }
   } else {
@@ -954,30 +1144,34 @@ async function handleTelegramMessage(message: any) {
   // -----------------------------------------------------------
   // Natural Language Course Search Flow
   // -----------------------------------------------------------
-  const matchedCourses = COURSES.filter(c =>
-    text.length > 2 && (
-      c.name.toLowerCase().includes(text) ||
-      c.faculty.toLowerCase().includes(text) ||
-      (text.includes('mrunal') && c.faculty.toLowerCase().includes('mrunal')) ||
-      (text.includes('bpsc') && c.section_keys.includes('bpsc')) ||
-      (text.includes('psir') && c.section_keys.includes('optional_psir')) ||
-      (text.includes('history') && c.section_keys.includes('optional_history')) ||
-      (text.includes('anthropology') && c.section_keys.includes('optional_anthropology')) ||
-      (text.includes('geography') && c.section_keys.includes('optional_geography')) ||
-      (text.includes('sociology') && c.section_keys.includes('optional_sociology')) ||
-      (text.includes('test series') && c.section_keys.includes('test_series'))
-    )
-  ).slice(0, 3);
+  const searchTerms = normalizeCourseSearch(rawText);
+  const matchedCourses = COURSES.map(course => {
+    const searchable = normalizeCourseSearch([
+      course.name,
+      course.faculty,
+      course.batch_id,
+      course.notes,
+      ...course.section_keys
+    ].join(' '));
+    const matchedTerms = searchTerms.filter(term => searchable.some(field => field.includes(term)));
+    return { course, score: searchTerms.length ? matchedTerms.length / searchTerms.length : 0 };
+  })
+    .filter(result => result.score >= 0.5)
+    .sort((left, right) => right.score - left.score)
+    .slice(0, 3)
+    .map(result => result.course);
 
   if (matchedCourses.length > 0) {
-    let reply = `🔍 <b>Relevant Courses Found for "${rawText}":</b>\n\n`;
+    let reply = `🔍 <b>Relevant Courses Found for "${escapeHtml(rawText)}":</b>\n\n`;
     matchedCourses.forEach(c => {
       reply += `📚 <b>${c.name}</b>\n• Faculty: <b>${c.faculty}</b> | Fee: <b>₹${c.price}</b>\n• Batch: <code>${c.batch_id}</code>\n• Details: ${c.notes}\n\n`;
     });
     reply += `👇 <i>Tap below to view full details or open the LMS portal:</i>`;
 
     const buttons: any[] = matchedCourses.map(c => [
-      { text: `⚡ Enroll in ${c.batch_id} (₹${c.price})`, callback_data: `buy:${c.id}` }
+      botInfo?.username
+        ? { text: `View ${c.batch_id} (₹${c.price})`, url: `https://t.me/${botInfo.username}?start=buy_${c.id}` }
+        : { text: `View ${c.batch_id} (₹${c.price})`, callback_data: `buy:${c.id}` }
     ]);
     buttons.push([{ text: "📚 Browse All 233+ in LMS", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }]);
 
@@ -1019,28 +1213,43 @@ async function handleTelegramCallback(callbackQuery: any) {
   const userId = fromUser.id;
   const isAdmin = ADMIN_ID > 0 && userId === ADMIN_ID;
 
+  if (data.startsWith('admin:') && !isAdmin) {
+    return tgApi('answerCallbackQuery', {
+      callback_query_id: id,
+      text: "Unauthorized",
+      show_alert: true
+    });
+  }
+
   await tgApi('answerCallbackQuery', { callback_query_id: id });
 
   const asp = getOrCreateAspirant(fromUser);
+
+  if (!isAdmin && data !== 'verify_channel_gate') {
+    if (!await isUserInBackupChannel(userId)) {
+      return tgApi('sendMessage', {
+        chat_id: chatId,
+        text: BACKUP_CHANNEL
+          ? "Join the required backup channel before using bot features."
+          : "Access is temporarily unavailable because the required backup channel has not been configured.",
+        reply_markup: BACKUP_CHANNEL ? {
+          inline_keyboard: [[{ text: "Join backup channel", url: `https://t.me/${BACKUP_CHANNEL}` }]]
+        } : undefined
+      });
+    }
+    asp.channelJoined = true;
+  }
 
   // Backup Channel Verification Callback
   if (data === 'verify_channel_gate') {
     const isJoined = await isUserInBackupChannel(userId);
     if (isJoined || isAdmin) {
       asp.channelJoined = true;
-      asp.coins += 50;
-
-      await notifyAdmin(`📢 <b>[BACKUP CHANNEL VERIFIED]</b>\n• User: <b>${asp.firstName}</b> (<code>${userId}</code>)\n• Status: Channel Verified ✅`);
-
       return tgApi('sendMessage', {
         chat_id: chatId,
-        parse_mode: 'HTML',
-        text: `🎉 <b>Verification Successful!</b>\n\nThank you for joining our Official Backup Channel. All 233+ UPSC batches, CA Tracker Pro, and Mains Answer Evaluator are now unlocked.\n\nTap below to explore:`,
+        text: "Backup channel membership verified. Bot commands are now available. Phone verification is required only to open the LMS.",
         reply_markup: {
-          inline_keyboard: [
-            [{ text: "📚 Open LMS Portal (233+ Batches)", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }],
-            [{ text: "📰 CA Tracker Pro", web_app: { url: `${WEBAPP_BASE_URL}/webapp/ca` } }, { text: "📋 Main Menu", callback_data: "menu:main" }]
-          ]
+          inline_keyboard: [[{ text: "Open menu", callback_data: "menu:main" }]]
         }
       });
     } else {
@@ -1059,21 +1268,20 @@ async function handleTelegramCallback(callbackQuery: any) {
   }
 
   if (data === 'quick_verify') {
-    asp.isVerified = true;
-    asp.phone = asp.phone || "+91-9876543210";
-    asp.coins += 50;
-
-    await notifyAdmin(`📱 <b>[PHONE VERIFIED]</b>\n• User: <b>${asp.firstName}</b> (<code>${userId}</code>)\n• Phone: <code>${asp.phone}</code>\n• Status: 1-Tap Verified ✅`);
+    if (message?.chat?.type !== 'private') {
+      return tgApi('sendMessage', {
+        chat_id: chatId,
+        text: "Open a private chat with the bot to verify your phone number."
+      });
+    }
 
     return tgApi('sendMessage', {
       chat_id: chatId,
-      parse_mode: 'HTML',
-      text: `✅ <b>Mobile Number Verified!</b>\n\n• Verified Phone: <code>${asp.phone}</code>\n• <b>50 Welcome Coins</b> added to your account\n• Full LMS access unlocked (Zero login required)\n\nTap below to explore all batches:`,
+      text: "Share your own contact to verify your phone number. The bot will not accept someone else's contact.",
       reply_markup: {
-        inline_keyboard: [
-          [{ text: "📚 Open LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }],
-          [{ text: "📋 Main Menu", callback_data: "menu:main" }]
-        ]
+        keyboard: [[{ text: "Share my phone number", request_contact: true }]],
+        resize_keyboard: true,
+        one_time_keyboard: true
       }
     });
   }
@@ -1122,7 +1330,9 @@ async function handleTelegramCallback(callbackQuery: any) {
       text: `📚 <b>UPSC Course Zone — Main Tracks</b>\n\nChoose a category or open the Mini App:`,
       reply_markup: {
         inline_keyboard: [
-          [{ text: "📚 Open Full LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }],
+          [asp.isVerified
+            ? { text: "📚 Open Full LMS Mini App", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }
+            : { text: "📱 Verify phone to access LMS", callback_data: "quick_verify" }],
           [{ text: "🏛 GS Foundation", callback_data: "cat:upsc_foundation" }, { text: "📗 Optionals", callback_data: "cat:upsc_optional" }],
           [{ text: "📝 Test Series", callback_data: "cat:test_series" }, { text: "🏢 State PSC", callback_data: "cat:state_psc" }]
         ]
@@ -1154,17 +1364,17 @@ async function handleTelegramCallback(callbackQuery: any) {
     const courseId = parseInt(data.replace(/^(buy:|confirm_buy:)/, ''), 10);
     const course = COURSES.find(c => c.id === courseId);
 
-    await notifyAdmin(`💳 <b>[COURSE ENROLLMENT CONFIRMED]</b>\n━━━━━━━━━━━━━━━━━━━━\n• User: <b>${asp.firstName}</b> (<code>${userId}</code>)\n• Course: <b>${course?.name || 'Course'}</b> (#${course?.batch_id})\n• Fee: ₹${course?.price || 0}\n• Phone: <code>${asp.phone || 'Not verified'}</code>\n━━━━━━━━━━━━━━━━━━━━`);
+    if (!course) {
+      return tgApi('sendMessage', { chat_id: chatId, text: "That course could not be found. No payment or access change was made." });
+    }
+
+    await reportUserActivity({
+      text: `Course interest: ${course.name} (${course.batch_id}), ₹${course.price}. Payment is not verified.`
+    }, asp);
 
     return tgApi('sendMessage', {
       chat_id: chatId,
-      parse_mode: 'HTML',
-      text: `🎉 <b>Access Activated!</b>\n\nYou have been enrolled in <b>${course?.name || 'Selected Batch'}</b>.\nBatch: <code>${course?.batch_id || 'CSE'}</code> | Fee: ₹${course?.price || 0}\n\nHandouts and video lectures are now available in your LMS portal:`,
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "📚 Open Course in LMS", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }]
-        ]
-      }
+      text: "Your course interest was sent to Admin. Payment was not processed and course access remains locked."
     });
   }
 
@@ -1195,16 +1405,9 @@ async function handleTelegramCallback(callbackQuery: any) {
   }
 
   if (data === 'redeem') {
-    asp.coins = Math.max(0, asp.coins - 200);
     return tgApi('sendMessage', {
       chat_id: chatId,
-      parse_mode: 'HTML',
-      text: `🎉 <b>200 Coins Redeemed!</b>\n\n1 Free Course credit has been unlocked for your account. Select any course in the LMS Mini App to claim.`,
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "📚 Choose Free Course in LMS", web_app: { url: `${WEBAPP_BASE_URL}/webapp/lms` } }]
-        ]
-      }
+      text: "Coin redemption is unavailable because a persistent wallet and enrollment ledger are not configured."
     });
   }
 }
@@ -1251,6 +1454,58 @@ async function startPollingLoop() {
 }
 
 // Auto-Heal Watchdog (Checks every 25 seconds)
+setInterval(async () => {
+  if (!BOT_TOKEN) return;
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(new Date());
+  const getPart = (type: string) => parts.find(part => part.type === type)?.value || '';
+  const dateKey = `${getPart('year')}-${getPart('month')}-${getPart('day')}`;
+  if (getPart('hour') !== '07' || getPart('minute') !== '30' || lastCountdownBroadcastDate === dateKey) return;
+
+  lastCountdownBroadcastDate = dateKey;
+  const result = await broadcastCountdown();
+  await notifyAdmin(`Daily countdown broadcast: ${result.sent} sent, ${result.failed} failed. Groups are pinned when bot permissions allow.`);
+}, 10_000);
+
+setInterval(async () => {
+  if (!BOT_TOKEN) return;
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Asia/Kolkata',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23'
+  }).formatToParts(new Date());
+  const getPart = (type: string) => parts.find(part => part.type === type)?.value || '';
+  const dateKey = `${getPart('year')}-${getPart('month')}-${getPart('day')}`;
+  const hour = getPart('hour');
+  const minute = getPart('minute');
+  let kind: 'morning' | 'night' | null = null;
+
+  if (hour === '07' && minute === '35' && lastMorningBroadcastDate !== dateKey) {
+    lastMorningBroadcastDate = dateKey;
+    kind = 'morning';
+  } else if (hour === '21' && minute === '30' && lastNightBroadcastDate !== dateKey) {
+    lastNightBroadcastDate = dateKey;
+    kind = 'night';
+  }
+
+  if (kind) {
+    const message = await generateDailyBroadcast(kind);
+    const result = await broadcastPersonalMessage(message, true);
+    await notifyAdmin(`${kind === 'morning' ? 'Morning' : 'Night'} broadcast: ${result.sent} sent, ${result.failed} failed.`);
+  }
+}, 10_000);
+
 setInterval(async () => {
   if (BOT_TOKEN && !botPollingActive) {
     console.log("[Auto-Heal Watchdog] Reviving Telegram polling worker...");
@@ -1386,26 +1641,16 @@ async function initTelegramBot() {
 app.get('/api/health', (_req: Request, res: Response) => {
   res.json({
     status: "ok",
-    database: "ok",
-    database_storage: "in_memory_datastore",
-    database_config: "node_migrated_service",
-    cron_heartbeat: userState.cronLastHeartbeat,
-    provider: "ai_studio_node",
-    telegram_bot: BOT_TOKEN ? "configured" : "simulation_mode",
-    bot_username: botInfo?.username || "csewala_bot",
-    bot_connected: Boolean(botInfo),
-    polling_active: botPollingActive,
-    admin_id: ADMIN_ID,
-    admin_access_unlocked: true,
-    courses_count: COURSES.length,
-    sections_count: SECTIONS.length,
-    aspirants_tracked: aspirantsDirectory.size,
-    lockdown_active: userState.emergencyLockdown,
     uptime_seconds: process.uptime()
   });
 });
 
-app.get('/api/cron', (_req: Request, res: Response) => {
+app.get('/api/cron', (req: Request, res: Response) => {
+  const cronSecret = process.env.CRON_SECRET;
+  if (!cronSecret || req.header('authorization') !== `Bearer ${cronSecret}`) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   userState.cronLastHeartbeat = new Date().toISOString();
   res.json({
     ok: true,
@@ -1423,90 +1668,24 @@ app.get('/api/cron', (_req: Request, res: Response) => {
 app.get('/api/bot/status', (_req: Request, res: Response) => {
   res.json({
     configured: Boolean(BOT_TOKEN),
-    token_preview: BOT_TOKEN ? `${BOT_TOKEN.slice(0, 6)}...${BOT_TOKEN.slice(-4)}` : null,
-    bot_info: botInfo,
-    polling_active: botPollingActive,
-    webapp_base_url: WEBAPP_BASE_URL,
-    updates_processed: updatesProcessedCount,
-    admin_id: ADMIN_ID,
-    backup_channel: BACKUP_CHANNEL,
-    aspirants_count: aspirantsDirectory.size,
-    admin_commands_count: 40,
-    user_commands_count: 10
-  });
-});
-
-app.post('/api/bot/reconnect', async (_req: Request, res: Response) => {
-  await initTelegramBot();
-  res.json({
-    ok: true,
-    bot_info: botInfo,
+    bot_username: botInfo?.username || null,
     polling_active: botPollingActive,
     updates_processed: updatesProcessedCount
   });
 });
 
+app.post('/api/bot/reconnect', async (_req: Request, res: Response) => {
+  res.status(403).json({ error: "Use the private Telegram Admin controls." });
+});
+
 app.post('/api/admin/set-base-url', async (req: Request, res: Response) => {
-  const url = String(req.body.url || "").trim().replace(/\/$/, "");
-  if (!url || !url.startsWith("http")) {
-    return res.status(400).json({ error: "Invalid URL provided. Must start with http:// or https://" });
-  }
-  WEBAPP_BASE_URL = url;
-  if (BOT_TOKEN) {
-    try {
-      await tgApi('setChatMenuButton', {
-        menu_button: {
-          type: 'web_app',
-          text: '📚 Open LMS',
-          web_app: { url: `${WEBAPP_BASE_URL}/?tab=lms` }
-        }
-      });
-    } catch {}
-  }
-  res.json({ ok: true, webapp_base_url: WEBAPP_BASE_URL });
+  res.status(403).json({ error: "Configure the Mini App URL through deployment settings." });
 });
 
 // Mobile verification endpoint (Zero login barrier)
 app.post('/api/user/verify-mobile', (req: Request, res: Response) => {
-  const phone = String(req.body.phone || "").trim();
-  const userId = parseInt(req.body.user_id || "1001", 10);
-
-  if (phone.length < 8) {
-    return res.status(400).json({ error: "Please enter a valid mobile number" });
-  }
-
-  let asp = aspirantsDirectory.get(userId);
-  if (!asp) {
-    asp = {
-      userId,
-      username: "web_aspirant",
-      firstName: "Aspirant",
-      phone,
-      isVerified: true,
-      channelJoined: true,
-      joinedAt: new Date().toISOString(),
-      lastActive: new Date().toISOString(),
-      coins: 100,
-      activities: [`Verified mobile via WebApp: ${phone}`]
-    };
-    aspirantsDirectory.set(userId, asp);
-  } else {
-    asp.phone = phone;
-    asp.isVerified = true;
-    asp.coins += 50;
-    asp.activities.push(`Verified mobile: ${phone}`);
-  }
-
-  // Notify admin in copy-paste dossier format
-  notifyAdmin(`📱 <b>[WEBAPP MOBILE VERIFICATION]</b>\n━━━━━━━━━━━━━━━━━━━━\n• User ID: <code>${userId}</code>\n• Phone: <code>${phone}</code>\n• Bonus: +50 Coins Added\n• Source: LMS WebApp Portal\n━━━━━━━━━━━━━━━━━━━━`);
-
-  res.json({
-    ok: true,
-    verified: true,
-    phone,
-    bonus_coins: 50,
-    total_coins: asp.coins,
-    message: "Mobile number verified successfully! 50 Bonus Coins added."
+  res.status(410).json({
+    error: "Web phone verification is disabled. Verify by sharing your own contact with the Telegram bot."
   });
 });
 
@@ -1700,6 +1879,18 @@ Integrate a forward-looking "Way Forward" concluding paragraph linking to sustai
 app.post('/api/bot/command', (req: Request, res: Response) => {
   const { command } = req.body;
   const cmd = String(command || "").trim().toLowerCase();
+  const commandName = cmd.split(/\s+/, 1)[0];
+  const adminCommands = new Set([
+    '/adminhelp', '/users', '/orders', '/grant', '/revoke', '/whois', '/moderation',
+    '/referrals', '/extract', '/content', '/courses', '/pricing', '/faculty', '/resources',
+    '/lms', '/coupons', '/analytics', '/stats', '/subscriptions', '/promo', '/broadcast',
+    '/schedule', '/inbox', '/groups', '/ai', '/quiz', '/gm', '/gn', '/countdown', '/notion',
+    '/presence', '/security', '/privacy', '/health', '/backup', '/recovery', '/audit',
+    '/export', '/system', '/settings', '/lockdown'
+  ]);
+  if (adminCommands.has(commandName)) {
+    return res.status(403).json({ error: "Admin commands are only available in the private Telegram Admin chat." });
+  }
 
   switch (cmd) {
     case '/start':
@@ -1735,7 +1926,7 @@ app.post('/api/bot/command', (req: Request, res: Response) => {
 
     case '/account':
       return res.json({
-        text: `👤 <b>Aspirant Account Profile</b>\n\n• <b>Status</b>: Active LMS Access ✅ (No login required)\n• <b>Phone</b>: ✅ Verified (+91-9876543210)\n• <b>Community Plan</b>: Active (Renews Oct 2026)\n• <b>CA Tracker Pro</b>: Active\n• <b>Current Streak</b>: 15 Days 🔥\n• <b>Referral Balance</b>: 300 Coins`,
+        text: `👤 <b>Account status</b>\n\nAccount verification and plan details are available only through the Telegram bot. This browser simulator does not expose account information.`,
         buttons: [
           [{ text: "📱 1-Tap Verify Mobile", callback_data: "quick_verify" }, { text: "🎁 Refer & Earn", callback_data: "referral" }],
           [{ text: "📜 Order History", callback_data: "orders" }]
@@ -1801,7 +1992,7 @@ app.post('/api/bot/command', (req: Request, res: Response) => {
 
     case '/extract':
       return res.json({
-        text: `📋 <b>[ASPIRANTS CONTACT & ACTIVITY DOSSIER]</b>\n━━━━━━━━━━━━━━━━━━━━\n• User ID: <code>7209486623</code> (Admin)\n• Phone: <code>+91-9876543210</code> [VERIFIED ✅]\n• Balance: 99999 Coins\n\n• User ID: <code>1001</code> (Rohit Sharma)\n• Phone: <code>+91-9823412091</code> [VERIFIED ✅]\n• Balance: 150 Coins\n\n• User ID: <code>1002</code> (Priya Verma)\n• Phone: <code>+91-9876501234</code> [VERIFIED ✅]\n• Balance: 200 Coins\n━━━━━━━━━━━━━━━━━━━━\n<i>Ready to copy-paste into Excel/Notion.</i>`,
+        text: "Admin commands are only available in the private Telegram Admin chat.",
         buttons: []
       });
 
@@ -1823,6 +2014,13 @@ app.post('/api/bot/command', (req: Request, res: Response) => {
 // Real Telegram Webhook Receiver
 // -------------------------------------------------------------
 app.post('/webhook', async (req: Request, res: Response) => {
+  const suppliedSecret = req.header('x-telegram-bot-api-secret-token') || '';
+  const expected = Buffer.from(TELEGRAM_WEBHOOK_SECRET);
+  const supplied = Buffer.from(suppliedSecret);
+  if (!expected.length || expected.length !== supplied.length || !timingSafeEqual(expected, supplied)) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
   const update = req.body;
   updatesProcessedCount += 1;
 

@@ -92,7 +92,7 @@ export default function App() {
   const [botMessages, setBotMessages] = useState<Array<{ sender: 'bot' | 'user'; text: string; buttons?: Array<{ text: string; cmd?: string; url?: string }> }>>([
     {
       sender: 'bot',
-      text: `🏛️ <b>UPSC CSE 2026–2027 | Mission Mussoorie 🇮🇳</b>\n<i>Official Prep & LMS Portal by Professor 🥼</i>\n\n🎯 <b>Prelims 2027 Target</b>: 23 May 2027\n📚 <b>Syllabus</b>: GS-1 to GS-4, CSAT, Essay & 16+ Optionals\n👨‍🏫 <b>Institutes</b>: Next IAS, Vision, Forum, Mrunal, Vajiram, PW\n📰 <b>CA Tracker Pro</b>: The Hindu, Indian Express, PIB Daily\n✍️ <b>Mains Evaluator</b>: Instant Rubric Scoring /10\n📅 <b>Study Calendar</b>: Google Calendar Sync Active\n\n⚡ <i>Zero login friction — instant 1-tap access below:</i>`,
+      text: `🏛️ <b>UPSC CSE 2026–2027 | Mission Mussoorie 🇮🇳</b>\n<i>UPSC learning portal</i>\n\n🎯 <b>Prelims 2027 Target</b>: 23 May 2027\n📚 <b>Syllabus</b>: GS-1 to GS-4, CSAT, Essay & 16+ Optionals\n📰 <b>Current Affairs</b>: Daily study resources\n✍️ <b>Mains Evaluator</b>: Answer feedback\n📅 <b>Study Calendar</b>: Local study planner\n\nOpen a section to get started:`,
       buttons: [
         { text: "📚 Open LMS Portal (233+ Batches)", cmd: "/menu" },
         { text: "📰 Daily CA Tracker Pro", cmd: "/ca" },
@@ -107,12 +107,7 @@ export default function App() {
   const [userInput, setUserInput] = useState('');
 
   // Mobile Verification State (Zero login barrier)
-  const [phoneVerified, setPhoneVerified] = useState(false);
-  const [phoneNumber, setPhoneNumber] = useState('');
-  const [phoneInput, setPhoneInput] = useState('');
-  const [phoneVerifying, setPhoneVerifying] = useState(false);
   const [phoneFeedback, setPhoneFeedback] = useState<string | null>(null);
-  const [isAdminVip, setIsAdminVip] = useState(true);
   // Admin & Bot state
   const [healthStatus, setHealthStatus] = useState<any>(null);
   const [botStatus, setBotStatus] = useState<any>(null);
@@ -120,7 +115,6 @@ export default function App() {
   const [cronRunning, setCronRunning] = useState(false);
   const [cronFeedback, setCronFeedback] = useState<string | null>(null);
   const [lockdown, setLockdown] = useState(false);
-  const adminChatId = botStatus?.admin_id || 7209486623;
 
   // Handle Tab Change with URL Query Param sync
   const handleTabChange = (tab: 'lms' | 'ca' | 'calendar' | 'community' | 'bot' | 'admin') => {
@@ -159,21 +153,12 @@ export default function App() {
     try {
       const params = new URLSearchParams(window.location.search);
       const tabParam = params.get('tab');
-      if (tabParam && ['lms', 'ca', 'calendar', 'community', 'bot', 'admin'].includes(tabParam)) {
+      if (tabParam && ['lms', 'ca', 'calendar', 'community', 'bot'].includes(tabParam)) {
         setActiveTab(tabParam as any);
       }
       const secParam = params.get('section');
       if (secParam) {
         setSelectedSection(secParam);
-      }
-    } catch {}
-
-    // 3. Load saved verified phone
-    try {
-      const savedPhone = localStorage.getItem('upsc_verified_phone');
-      if (savedPhone) {
-        setPhoneVerified(true);
-        setPhoneNumber(savedPhone);
       }
     } catch {}
 
@@ -189,40 +174,6 @@ export default function App() {
       loadStatuses();
     } catch {}
     setBotSyncing(false);
-  };
-
-  const handleVerifyMobile = async () => {
-    if (!phoneInput.trim() || phoneInput.length < 8) {
-      setPhoneFeedback("Please enter a valid mobile number (e.g. +91 9876543210)");
-      return;
-    }
-    setPhoneVerifying(true);
-    setPhoneFeedback(null);
-    try {
-      const res = await fetch('/api/user/verify-mobile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: phoneInput })
-      });
-      const data = await res.json();
-      if (data.ok) {
-        setPhoneVerified(true);
-        setPhoneNumber(phoneInput);
-        try {
-          localStorage.setItem('upsc_verified_phone', phoneInput);
-        } catch {}
-        setPhoneFeedback(`✅ Mobile Verified: ${phoneInput} • 50 Bonus Coins Added!`);
-      }
-    } catch {
-      setPhoneVerified(true);
-      setPhoneNumber(phoneInput);
-      try {
-        localStorage.setItem('upsc_verified_phone', phoneInput);
-      } catch {}
-      setPhoneFeedback(`✅ Mobile Verified: ${phoneInput} • 50 Bonus Coins Added!`);
-    } finally {
-      setPhoneVerifying(false);
-    }
   };
 
   // Filter Courses
@@ -405,7 +356,7 @@ export default function App() {
           >
             <Calendar className="w-4 h-4" />
             <span>Study Calendar</span>
-            <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-900/80 text-blue-300 font-semibold">Google Sync</span>
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-blue-900/80 text-blue-300 font-semibold">Saved locally</span>
           </button>
 
           <button
@@ -433,17 +384,6 @@ export default function App() {
             <span>Bot Simulator</span>
           </button>
 
-          <button
-            onClick={() => handleTabChange('admin')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all shrink-0 ${
-              activeTab === 'admin'
-                ? 'bg-sky-600 text-white shadow-md shadow-sky-600/25'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'
-            }`}
-          >
-            <ShieldCheck className="w-4 h-4" />
-            <span>Admin Suite & Health</span>
-          </button>
         </div>
       </nav>
 
@@ -454,30 +394,7 @@ export default function App() {
             ======================================================== */}
         {activeTab === 'lms' && (
           <div className="space-y-6">
-            {/* Admin All-Access VIP Banner */}
-            {isAdminVip && (
-              <div className="bg-gradient-to-r from-emerald-950 via-slate-950 to-sky-950 border border-emerald-700/60 rounded-2xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-lg">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center font-bold text-lg shrink-0">
-                    ⭐
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-sm text-emerald-300 flex items-center gap-2">
-                      <span>Professor Admin VIP Mode</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-900/80 text-emerald-200 border border-emerald-700">ALL ACCESS UNLOCKED</span>
-                    </h3>
-                    <p className="text-xs text-slate-300 mt-0.5">
-                      All 233 UPSC courses, handouts, notes, and test series are pre-unlocked with lifetime access.
-                    </p>
-                  </div>
-                </div>
-                <div className="text-xs font-semibold px-3 py-1 rounded-lg bg-emerald-900/60 text-emerald-300 border border-emerald-700/80 self-start md:self-auto">
-                  Admin ID: {adminChatId}
-                </div>
-              </div>
-            )}
-
-            {/* Mobile Number Verification Bar (Frictionless, No Login Required) */}
+            {/* Mobile Number Verification */}
             <div className="bg-slate-950 p-4 rounded-2xl border border-slate-800 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-3">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20 flex items-center justify-center shrink-0">
@@ -485,48 +402,31 @@ export default function App() {
                 </div>
                 <div>
                   <h4 className="font-semibold text-sm text-white flex items-center gap-2">
-                    <span>Mobile Number Verification</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-900 text-sky-400 border border-slate-800">NO LOGIN REQUIRED</span>
+                    <span>Verify your phone in Telegram</span>
                   </h4>
                   <p className="text-xs text-slate-400">
-                    Zero login barrier. Verify your mobile to earn 50 bonus coins and claim verified aspirant status.
+                    Join the backup channel, then share your own contact with the bot. A typed number is not verification.
                   </p>
                 </div>
               </div>
 
-              {phoneVerified ? (
-                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-400 bg-emerald-950/60 border border-emerald-800/80 px-3.5 py-2 rounded-xl">
-                  <CheckCircle2 className="w-4 h-4 shrink-0" />
-                  <span>Verified: {phoneNumber || "+91-9876543210"} (+50 Coins Added)</span>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 w-full md:w-auto">
-                  <input
-                    type="tel"
-                    value={phoneInput}
-                    onChange={e => setPhoneInput(e.target.value)}
-                    placeholder="+91 9876543210"
-                    className="bg-slate-900 text-slate-100 text-xs px-3 py-2 rounded-xl border border-slate-700/80 focus:border-sky-500 focus:outline-none w-full md:w-44"
-                  />
-                  <button
-                    onClick={handleVerifyMobile}
-                    disabled={phoneVerifying}
-                    className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-semibold shrink-0 shadow-md shadow-sky-600/20 transition-all flex items-center gap-1.5"
-                  >
-                    {phoneVerifying ? (
-                      <>
-                        <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                        <span>Verifying...</span>
-                      </>
-                    ) : (
-                      <>
-                        <Phone className="w-3.5 h-3.5" />
-                        <span>Verify Mobile</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              )}
+              <button
+                onClick={() => {
+                  const username = botStatus?.bot_username;
+                  if (!username) {
+                    setPhoneFeedback('Telegram bot is not configured yet.');
+                    return;
+                  }
+                  const url = `https://t.me/${username}?start=verify_phone`;
+                  const telegram = (window as any).Telegram?.WebApp;
+                  if (telegram) telegram.openTelegramLink(url);
+                  else window.open(url, '_blank', 'noopener,noreferrer');
+                }}
+                className="px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-semibold shrink-0 flex items-center gap-1.5"
+              >
+                <Phone className="w-3.5 h-3.5" />
+                <span>Open Telegram bot</span>
+              </button>
             </div>
 
             {phoneFeedback && (
@@ -1109,14 +1009,14 @@ export default function App() {
               </div>
             </div>
 
-            {/* Telegram WebApp URL & Google Sign-In Barrier Elimination Card */}
-            <div className="bg-gradient-to-r from-slate-950 via-indigo-950/40 to-slate-950 p-6 rounded-2xl border border-indigo-900/50 space-y-3">
+            {/* Telegram Mini App connection status */}
+            <div className="bg-slate-950 p-6 rounded-2xl border border-slate-800 space-y-3">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-950 text-emerald-300 border border-emerald-800 flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
-                      Public Access • Zero Google Login Prompt
+                      Telegram Mini App
                     </span>
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-sky-950 text-sky-300 border border-sky-800">
                       Telegram WebApp Ready
@@ -1124,13 +1024,12 @@ export default function App() {
                   </div>
                   <h3 className="text-base font-bold text-white">Telegram Mini App Endpoint & Integrations</h3>
                 </div>
-                <div className="text-xs font-mono text-slate-300 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800 truncate max-w-sm">
-                  {botStatus?.webapp_base_url || 'https://ais-pre-2w4vncmko2fiwls5psbjos-513814413634.asia-east1.run.app'}
+                <div className="text-xs font-mono text-slate-300 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-800">
+                  {botStatus?.configured ? 'Bot configured' : 'Bot not configured'}
                 </div>
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
-                The Telegram Bot and Mini App menu buttons are configured to point to the public shared URL (<code>ais-pre-...</code>), 
-                eliminating the Google Sign-in screen when opened on mobile Telegram. Firebase and Google Calendar APIs are connected for optional study timetable synchronization with zero forced login.
+                Mini App links use the configured deployment URL. Study plans stay in this browser and do not require an external account.
               </p>
             </div>
 
@@ -1173,7 +1072,7 @@ export default function App() {
                     <span>Complete 40 Admin Commands Suite</span>
                     <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 border border-emerald-800 font-semibold">ALL 40 ACTIVE</span>
                   </h3>
-                  <p className="text-xs text-slate-400">Scoped exclusively to authorized Administrator Chat ID {adminChatId}. Click any command to test output.</p>
+                  <p className="text-xs text-slate-400">Administrator commands are available only in the authenticated Telegram admin chat.</p>
                 </div>
               </div>
 

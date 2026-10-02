@@ -11,6 +11,10 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isAdmin() {
+      return isSignedIn() && request.auth.token.admin == true;
+    }
+
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
@@ -34,10 +38,13 @@ service cloud.firestore {
 
     match /users/{userId} {
       allow get: if isOwner(userId);
-      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(request.resource.data);
+      allow create: if isOwner(userId) && isValidId(userId) && isValidUserProfile(request.resource.data) &&
+                      (request.resource.data.role == 'student' || (isAdmin() && request.resource.data.role == 'admin')) &&
+                      !('coins' in request.resource.data) && !('streak' in request.resource.data);
       allow update: if isOwner(userId) && isValidId(userId) && isValidUserProfile(request.resource.data) &&
                        request.resource.data.id == resource.data.id &&
-                       request.resource.data.role == resource.data.role;
+                       request.resource.data.role == resource.data.role &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName', 'updatedAt']);
       allow delete: if false;
     }
 
